@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "78415977018",
+    "project_id": "ariaapp-ae1cc",
+    "storage_bucket": "ariaapp-ae1cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78415977018:android:e0003af9019ac50f2a3303",
+        "android_client_info": {
+          "package_name": "com.example.aria_productivity_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChPDSdTAJguxPuX1gf1AdFPtaSGwOfVtg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
