@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -10,41 +11,16 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  bool _isLoading = false;
 
-  void _register() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.registerWithEmailAndPassword(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/shell');
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Ошибка регистрации'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: const Color(0xFF1A1A2E),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -52,120 +28,143 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF1A1A2E)),
-      ),
+      appBar: AppBar(),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white, Color(0xFFE6F4EA), Color(0xFFE6F4EA)],
+            colors: isDark
+                ? const [
+                    Color(0xFF0B1120),
+                    Color(0xFF132238),
+                    Color(0xFF111827),
+                  ]
+                : const [
+                    Colors.white,
+                    Color(0xFFE6F4EA),
+                    Color(0xFFD9F99D),
+                  ],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.fromLTRB(28, 16, 28, 28),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 84,
+                    height: 84,
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00C9A7),
-                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(26),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00C9A7).withOpacity(0.3),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.25),
                           blurRadius: 24,
                           offset: const Offset(0, 12),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 40),
+                    child: const Icon(
+                      Icons.person_add_alt_rounded,
+                      color: Colors.white,
+                      size: 42,
+                    ),
                   ),
-                  const Text(
-                    'Создать аккаунт',
+                  Text(
+                    'Create account',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1A2E),
-                      letterSpacing: -0.5,
+                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Присоединяйтесь и начните жить продуктивнее.',
+                  Text(
+                    'Set up your profile once and keep tasks, analytics, and settings in sync.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF6B7280),
-                      height: 1.4,
+                      height: 1.45,
+                      color: isDark
+                          ? const Color(0xFFCBD5E1)
+                          : const Color(0xFF6B7280),
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 36),
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
+                      color: isDark
+                          ? const Color(0xFF111827).withValues(alpha: 0.92)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9),
+                      ),
                     ),
                     child: Column(
                       children: [
-                        _buildTextField(
-                          controller: _emailController,
-                          label: 'Email',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
+                        TextField(
+                          controller: _nameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Name',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
                         ),
                         const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: 'Пароль',
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: true,
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: Icon(Icons.lock_outline_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: FilledButton(
                             onPressed: _isLoading ? null : _register,
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF00C9A7),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
+                              backgroundColor: const Color(0xFF10B981),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.6,
+                                    ),
                                   )
                                 : const Text(
-                                    'Зарегистрироваться',
+                                    'Create Account',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
                                     ),
                                   ),
                           ),
@@ -182,33 +181,34 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E)),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
-        prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 22),
-        filled: true,
-        fillColor: const Color(0xFFF9FAFB),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFF3F4F6), width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 1.5),
-        ),
-      ),
-    );
+  Future<void> _register() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.registerWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        displayName: _nameController.text.trim(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, '/shell');
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message ?? 'Unable to create account.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }
+

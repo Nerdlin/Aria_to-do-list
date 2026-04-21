@@ -4,51 +4,54 @@ import 'package:flutter/foundation.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Sign in with email and password
   Future<User?> signInWithEmailAndPassword(String email, String password) async {
     try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
+      final result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       return result.user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (error) {
       if (kDebugMode) {
-        print('Error during sign in: ${e.message}');
+        print('Error during sign in: ${error.message}');
       }
       rethrow;
     }
   }
 
-  // Register with email and password
-  Future<User?> registerWithEmailAndPassword(String email, String password) async {
+  Future<User?> registerWithEmailAndPassword(
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
     try {
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
+      final result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        await result.user?.updateDisplayName(displayName.trim());
+      }
+
       return result.user;
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (error) {
       if (kDebugMode) {
-        print('Error during registration: ${e.message}');
+        print('Error during registration: ${error.message}');
       }
       rethrow;
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     try {
       await _auth.signOut();
-    } catch (e) {
+    } catch (error) {
       if (kDebugMode) {
-        print('Error during sign out: $e');
+        print('Error during sign out: $error');
       }
     }
   }
 
-  // Get current user stream
-  Stream<User?> get user {
-    return _auth.authStateChanges();
-  }
+  Stream<User?> get user => _auth.authStateChanges();
 }

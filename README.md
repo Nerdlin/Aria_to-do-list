@@ -19,47 +19,78 @@
 
 ---
 
-## 📸 Экраны приложения
+## 📸 Экраны приложения (из Figma Make)
 
-| Описание | Экран |
+| Экран | Реализовано |
 | :---: | :---: |
-| **Главный экран (Home)** | Приветствие, AI-инсайты, расписание дня и красивая плавающая кнопка. |
-| **Мои задачи (Tasks)** | Список задач с фильтрами, приоритетами и возможностью отмечать выполненное. |
-| **Новая задача (Add Task)** | Умное добавление задачи с AI-предложениями и выбором категорий. |
-| **Статистика (Analytics)** | Просмотр еженедельной оценки эффективности и выполненных дел. |
-| **Настройки (Settings)** | Настройка уведомлений, умных напоминаний и управление аккаунтом. |
+| **Splash Screen** | ✅ Градиент, автонавигация |
+| **Onboarding (3 слайда)** | ✅ Анимации, Smart Planning, Priority Intelligence, Time Optimization |
+| **Auth Screen** | ✅ Firebase Auth, красивые формы |
+| **Home Screen** | ✅ AI Insight, Quick Stats, Schedule, Priority Tasks, Weekly Progress, Focus Timer |
+| **Tasks Screen** | ✅ Поиск, фильтры (All/Today/High/AI Pick), toggle completion, delete |
+| **Add Task Screen** | ✅ AI Suggestions, 6 категорий, date/time picker |
+| **Analytics Screen** | ✅ Score Ring с анимацией, 4 stat cards, Weekly Chart, Category Breakdown, Achievements |
+| **Settings Screen** | ✅ Profile card, AI Features, Notifications, Appearance, Account, Sign Out |
+
+### Особенности реализации:
+- 🎨 **Pixel-perfect** - полное соответствие Figma дизайну
+- 🔥 **No hardcoded data** - все данные из Firebase в реальном времени
+- ✨ **Анимации** - score ring, progress bars, transitions
+- 🎯 **Градиенты** - точные цвета из Figma (#8B5CF6, #6366F1, etc.)
+- 📊 **Графики** - Weekly Progress, Category Breakdown
+- 🏆 **Achievements** - badges с unlock состояниями
 
 ---
 
-## 🚀 Установка и запуск
+## 🚀 Быстрый запуск (Одна команда!)
 
-Для запуска приложения на вашем локальном устройстве или эмуляторе, выполните следующие шаги:
-
-### 1. Предварительные требования
-Убедитесь, что у вас установлены:
-*   [Flutter SDK](https://docs.flutter.dev/get-started/install) (версия >= 3.0.0)
-*   [Android Studio](https://developer.android.com/studio) или VS Code
-
-### 2. Клонирование репозитория
+### Windows
 ```bash
-git clone https://github.com/your-username/aria_flutter_app.git
-cd aria_flutter_app
+.\run_mobile.bat
 ```
 
-### 3. Установка зависимостей
+### Mac/Linux
+```bash
+chmod +x run_mobile.sh
+./run_mobile.sh
+```
+
+Скрипт автоматически:
+1. Проверяет, запущен ли эмулятор
+2. Запускает Android эмулятор (если нужно)
+3. Ждет загрузки (~45 сек)
+4. Запускает приложение
+
+---
+
+## 📱 Ручная установка
+
+### 1. Предварительные требования
+*   [Flutter SDK](https://docs.flutter.dev/get-started/install) (версия >= 3.41.7)
+*   [Android Studio](https://developer.android.com/studio) (для Android SDK и эмуляторов)
+
+### 2. Установка зависимостей
 ```bash
 flutter pub get
 ```
 
-### 4. Настройка Firebase
-Приложение использует Firebase. Убедитесь, что вы создали проект в [Firebase Console](https://console.firebase.google.com/):
-1. Включите **Authentication** (Email/Password).
-2. Включите **Firestore Database** (создайте базу данных в *Test Mode*).
-3. Скачайте файл `google-services.json` для Android и положите его в папку `android/app/`.
+### 3. Настройка Firebase
+Файл `google-services.json` уже настроен в `android/app/`. 
 
-### 5. Запуск
+Если нужно использовать свой Firebase проект:
+1. Создайте проект в [Firebase Console](https://console.firebase.google.com/)
+2. Включите **Authentication** (Email/Password)
+3. Включите **Firestore Database** (Test Mode)
+4. Скачайте `google-services.json` и замените в `android/app/`
+
+### 4. Запуск эмулятора
 ```bash
-flutter run
+flutter emulators --launch Medium_Phone_API_36.1
+```
+
+### 5. Запуск приложения
+```bash
+flutter run -d emulator-5554
 ```
 
 ---

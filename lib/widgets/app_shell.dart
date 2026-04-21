@@ -6,16 +6,21 @@ import '../screens/settings_screen.dart';
 import '../screens/tasks_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({
+    super.key,
+    this.initialIndex = 0,
+  });
+
+  final int initialIndex;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
-  final List<Widget> _pages = const [
+  late final List<Widget> _pages = const [
     HomeScreen(),
     TasksScreen(),
     AnalyticsScreen(),
@@ -23,7 +28,19 @@ class _AppShellState extends State<AppShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    const activeColor = Color(0xFF7C3AED);
+    final inactiveColor =
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF9CA3AF);
+
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
@@ -31,17 +48,19 @@ class _AppShellState extends State<AppShell> {
         children: _pages,
       ),
       floatingActionButton: Container(
-        height: 64,
-        width: 64,
-        margin: const EdgeInsets.only(top: 30),
+        height: 66,
+        width: 66,
+        margin: const EdgeInsets.only(top: 24),
         decoration: BoxDecoration(
-          color: const Color(0xFF7B61FF),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+          ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7B61FF).withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: const Color(0xFF7C3AED).withValues(alpha: 0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
@@ -49,50 +68,80 @@ class _AppShellState extends State<AppShell> {
           onPressed: () => Navigator.pushNamed(context, '/add-task'),
           elevation: 0,
           backgroundColor: Colors.transparent,
-          child: const Icon(Icons.add_rounded, size: 32, color: Colors.white),
+          child: const Icon(Icons.add_rounded, size: 34, color: Colors.white),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Theme(
-        data: ThemeData(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-        ),
-        child: BottomAppBar(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          height: 75,
-          color: Colors.white,
-          elevation: 20,
-          shadowColor: Colors.black.withOpacity(0.1),
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_rounded, Icons.home_outlined, 'Home', 0),
-              _buildNavItem(Icons.check_box_rounded, Icons.check_box_outlined, 'Tasks', 1),
-              const SizedBox(width: 48), // Space for FAB
-              _buildNavItem(Icons.bar_chart_rounded, Icons.bar_chart_outlined, 'Analytics', 2),
-              _buildNavItem(Icons.settings_rounded, Icons.settings_outlined, 'Settings', 3),
-            ],
-          ),
+      bottomNavigationBar: BottomAppBar(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 24,
+        height: 78,
+        shadowColor: Colors.black.withValues(alpha: 0.12),
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 10,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(
+              activeIcon: Icons.home_rounded,
+              inactiveIcon: Icons.home_outlined,
+              label: 'Home',
+              index: 0,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
+            ),
+            _buildNavItem(
+              activeIcon: Icons.check_box_rounded,
+              inactiveIcon: Icons.check_box_outlined,
+              label: 'Tasks',
+              index: 1,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
+            ),
+            const SizedBox(width: 48),
+            _buildNavItem(
+              activeIcon: Icons.bar_chart_rounded,
+              inactiveIcon: Icons.bar_chart_outlined,
+              label: 'Analytics',
+              index: 2,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
+            ),
+            _buildNavItem(
+              activeIcon: Icons.settings_rounded,
+              inactiveIcon: Icons.settings_outlined,
+              label: 'Settings',
+              index: 3,
+              activeColor: activeColor,
+              inactiveColor: inactiveColor,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData activeIcon, IconData inactiveIcon, String label, int index) {
-    final bool isActive = _currentIndex == index;
-    final Color color = isActive ? const Color(0xFF7B61FF) : const Color(0xFF9CA3AF);
+  Widget _buildNavItem({
+    required IconData activeIcon,
+    required IconData inactiveIcon,
+    required String label,
+    required int index,
+    required Color activeColor,
+    required Color inactiveColor,
+  }) {
+    final isActive = _currentIndex == index;
+    final color = isActive ? activeColor : inactiveColor;
 
     return InkWell(
       onTap: () => setState(() => _currentIndex = index),
-      customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? color.withOpacity(0.08) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          color: isActive ? activeColor.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -114,3 +163,4 @@ class _AppShellState extends State<AppShell> {
     );
   }
 }
+

@@ -1,16 +1,18 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 
 import 'screens/add_task_screen.dart';
 import 'screens/auth_screen.dart';
-import 'screens/registration_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/registration_screen.dart';
 import 'screens/splash_screen.dart';
+import 'services/app_controller.dart';
 import 'widgets/app_shell.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await AppController.instance.init();
   runApp(const AriaApp());
 }
 
@@ -19,22 +21,93 @@ class AriaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Aria',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF7C3AED),
-        scaffoldBackgroundColor: const Color(0xFFF8F7FF),
-      ),
-      home: const SplashScreen(),
-      routes: {
-        '/onboarding': (_) => const OnboardingScreen(),
-        '/auth': (_) => const AuthScreen(),
-        '/register': (_) => const RegistrationScreen(),
-        '/shell': (_) => const AppShell(),
-        '/add-task': (_) => const AddTaskScreen(),
+    return ListenableBuilder(
+      listenable: AppController.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Aria',
+          theme: _buildTheme(Brightness.light),
+          darkTheme: _buildTheme(Brightness.dark),
+          themeMode: AppController.instance.themeMode,
+          home: const SplashScreen(),
+          routes: {
+            '/onboarding': (_) => const OnboardingScreen(),
+            '/auth': (_) => const AuthScreen(),
+            '/register': (_) => const RegistrationScreen(),
+            '/shell': (_) => const AppShell(),
+            '/add-task': (_) => const AddTaskScreen(),
+          },
+        );
       },
     );
   }
+}
+
+ThemeData _buildTheme(Brightness brightness) {
+  final isDark = brightness == Brightness.dark;
+  final baseScheme = ColorScheme.fromSeed(
+    seedColor: const Color(0xFF7C3AED),
+    brightness: brightness,
+  );
+
+  final colorScheme = baseScheme.copyWith(
+    primary: const Color(0xFF7C3AED),
+    secondary: const Color(0xFF6366F1),
+    surface: isDark ? const Color(0xFF111827) : Colors.white,
+    onSurface: isDark ? Colors.white : const Color(0xFF0F172A),
+    onPrimary: Colors.white,
+    outline: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor:
+        isDark ? const Color(0xFF0B1120) : const Color(0xFFF8F7FF),
+    cardColor: isDark ? const Color(0xFF111827) : Colors.white,
+    dividerColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+      contentTextStyle: const TextStyle(color: Colors.white),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    appBarTheme: AppBarTheme(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      foregroundColor: colorScheme.onSurface,
+      centerTitle: false,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF7C3AED),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: isDark ? const Color(0xFF172033) : Colors.white,
+      hintStyle: TextStyle(
+        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9CA3AF),
+      ),
+      labelStyle: TextStyle(
+        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF9CA3AF),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 1.5),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.outline),
+      ),
+    ),
+  );
 }

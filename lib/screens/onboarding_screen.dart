@@ -13,8 +13,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, dynamic>> _slides = [
     {
-      'color': const Color(0xFF7B61FF),
-      'bgColor': const Color(0xFFF0EFFF),
+      'color': const Color(0xFF8B5CF6),
+      'bgColor': const Color(0xFFF5F3FF),
       'icon': Icons.psychology_rounded,
       'title': 'Smart Daily Planning',
       'subtitle':
@@ -29,8 +29,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'chips': ['✦ AI Optimized', '✦ Auto-Schedule'],
     },
     {
-      'color': const Color(0xFF00C9A7),
-      'bgColor': const Color(0xFFE6F4EA),
+      'color': const Color(0xFF3B82F6),
+      'bgColor': const Color(0xFFEFF6FF),
+      'icon': Icons.bolt_rounded,
+      'title': 'Priority Intelligence',
+      'subtitle':
+          'AI continuously ranks your tasks by impact and deadline so you always focus on what moves the needle most.',
+      'previewLabel': 'AI PREVIEW',
+      'items': [
+        {'text': '🔴 High Impact · Q4 Strategy', 'highlight': true},
+        {'text': '🟡 Medium · Team Sync', 'highlight': false},
+        {'text': '🟢 Low · Archive emails', 'highlight': false},
+      ],
+      'chips': ['✦ Smart Ranking', '✦ Auto-Priority'],
+    },
+    {
+      'color': const Color(0xFF10B981),
+      'bgColor': const Color(0xFFF0FDF4),
       'icon': Icons.trending_up_rounded,
       'title': 'Time Optimization',
       'subtitle':
@@ -60,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              currentBgColor.withOpacity(0.6),
+              currentBgColor.withValues(alpha: 0.6),
               currentBgColor,
             ],
           ),
@@ -76,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     TextButton(
                       onPressed: () => Navigator.pushReplacementNamed(context, '/auth'),
                       style: TextButton.styleFrom(
-                        foregroundColor: currentColor.withOpacity(0.8),
+                        foregroundColor: currentColor.withValues(alpha: 0.8),
                       ),
                       child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
@@ -108,7 +123,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: color.withOpacity(0.3),
+                                  color: color.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -143,7 +158,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               borderRadius: BorderRadius.circular(32),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 24,
                                   offset: const Offset(0, 12),
                                 ),
@@ -182,16 +197,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     margin: const EdgeInsets.only(bottom: 12),
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                     decoration: BoxDecoration(
-                                      color: isHighlighted ? color.withOpacity(0.1) : const Color(0xFFF9FAFB),
+                                      color: isHighlighted ? color.withValues(alpha: 0.1) : const Color(0xFFF9FAFB),
                                       borderRadius: BorderRadius.circular(16),
-                                      border: isHighlighted ? Border.all(color: color.withOpacity(0.2)) : null,
+                                      border: isHighlighted ? Border.all(color: color.withValues(alpha: 0.2)) : null,
                                     ),
                                     child: Text(
                                       item['text'] as String,
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
-                                        color: isHighlighted ? color.withOpacity(0.9) : const Color(0xFF4B5563),
+                                        color: isHighlighted ? color.withValues(alpha: 0.9) : const Color(0xFF4B5563),
                                       ),
                                     ),
                                   );
@@ -207,7 +222,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.1),
+                                  color: color.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(99),
                                 ),
                                 child: Text(
@@ -241,7 +256,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: active ? 24 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: active ? currentColor : currentColor.withOpacity(0.2),
+                            color: active ? currentColor : currentColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(99),
                           ),
                         );
@@ -268,7 +283,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: currentColor.withOpacity(0.4),
+                              color: currentColor.withValues(alpha: 0.4),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -287,3 +302,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
+
