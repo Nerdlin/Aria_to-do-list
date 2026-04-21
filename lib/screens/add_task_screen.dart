@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/task_service.dart';
+import 'package:intl/intl.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -13,6 +14,28 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final TaskService _taskService = TaskService();
   String _selectedCategory = 'Work';
   bool _isLoading = false;
+  DateTime _selectedDate = DateTime.now();
+
+  void _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null) return;
+    if (!mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedDate),
+    );
+    if (time == null) return;
+
+    setState(() {
+      _selectedDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    });
+  }
 
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.work_rounded, 'label': 'Work', 'color': const Color(0xFF7B61FF)},
@@ -31,7 +54,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       title: _titleController.text.trim(),
       priority: 'High', // Defaulting to high for MVP
       category: _selectedCategory,
-      date: DateTime.now(),
+      date: _selectedDate,
       isAiPick: true,
     );
     
@@ -175,6 +198,48 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       final cat = _categories[index];
                       return _buildCategoryBtn(cat['icon'], cat['label'], cat['color'], _selectedCategory == cat['label']);
                     },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFF3F4F6).withOpacity(0.8), width: 1.5),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 8))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('SCHEDULE', style: TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: _pickDateTime,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF3F4F6)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_rounded, color: Color(0xFF7B61FF)),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              DateFormat('MMM dd, yyyy - hh:mm a').format(_selectedDate),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)),
+                            ),
+                          ),
+                          const Icon(Icons.edit_rounded, color: Color(0xFF9CA3AF), size: 20),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

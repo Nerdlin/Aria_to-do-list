@@ -11,6 +11,8 @@ class TasksScreen extends StatefulWidget {
 
 class _TasksScreenState extends State<TasksScreen> {
   final TaskService _taskService = TaskService();
+  String _searchQuery = '';
+  String _activeFilter = 'All';
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class _TasksScreenState extends State<TasksScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Search tasks...',
                     hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
@@ -68,10 +71,10 @@ class _TasksScreenState extends State<TasksScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
                   children: [
-                    _buildFilterChip('All', true),
-                    _buildFilterChip('Today', false),
-                    _buildFilterChip('High Priority', false),
-                    _buildFilterChip('✦ AI Pick', false, isAi: true),
+                    _buildFilterChip('All', _activeFilter == 'All'),
+                    _buildFilterChip('Today', _activeFilter == 'Today'),
+                    _buildFilterChip('High Priority', _activeFilter == 'High Priority'),
+                    _buildFilterChip('✦ AI Pick', _activeFilter == '✦ AI Pick', isAi: true),
                   ],
                 ),
               ),
@@ -87,7 +90,31 @@ class _TasksScreenState extends State<TasksScreen> {
                   );
                 }
 
-                final tasks = snapshot.data!;
+                final tasks = snapshot.data!.where((task) {
+                  if (_searchQuery.isNotEmpty && !task.title.toLowerCase().contains(_searchQuery)) {
+                    return false;
+                  }
+                  if (_activeFilter == 'Today') {
+                    final now = DateTime.now();
+                    if (task.date.year != now.year || task.date.month != now.month || task.date.day != now.day) {
+                      return false;
+                    }
+                  } else if (_activeFilter == 'High Priority') {
+                    if (task.priority != 'High') return false;
+                  } else if (_activeFilter == '✦ AI Pick') {
+                    if (!task.isAiPick) return false;
+                  }
+                  return true;
+                }).toList();
+
+                if (tasks.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text('No matching tasks.', style: TextStyle(color: Colors.grey[500], fontSize: 16, fontWeight: FontWeight.w600)),
+                    ),
+                  );
+                }
+
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -108,15 +135,19 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Widget _buildFilterChip(String label, bool isActive, {bool isAi = false}) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF7B61FF) : (isAi ? Colors.white : const Color(0xFFF9FAFB)),
-        borderRadius: BorderRadius.circular(99),
-        border: isActive ? null : Border.all(color: const Color(0xFFF3F4F6)),
+    return InkWell(
+      onTap: () => setState(() => _activeFilter = label),
+      borderRadius: BorderRadius.circular(99),
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF7B61FF) : (isAi ? Colors.white : const Color(0xFFF9FAFB)),
+          borderRadius: BorderRadius.circular(99),
+          border: isActive ? null : Border.all(color: const Color(0xFFF3F4F6)),
+        ),
+        child: Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isActive ? Colors.white : (isAi ? const Color(0xFF7B61FF) : const Color(0xFF4B5563)))),
       ),
-      child: Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isActive ? Colors.white : (isAi ? const Color(0xFF7B61FF) : const Color(0xFF4B5563)))),
     );
   }
 

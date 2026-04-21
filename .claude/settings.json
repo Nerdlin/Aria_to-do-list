@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\nerdl\\.claude\\plugins\\marketplaces\\claude-plugins-official\\external_plugins\\firebase\\build\\index.js"
+      ]
+    },
+    "github": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\nerdl\\.claude\\plugins\\marketplaces\\claude-plugins-official\\external_plugins\\github\\build\\index.js"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@context7/mcp-server@latest"
+      ]
+    }
+  }
+}

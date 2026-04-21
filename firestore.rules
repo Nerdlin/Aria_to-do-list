@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Функция проверки аутентификации
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Функция проверки владельца
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Правила для пользователей
+    match /users/{userId} {
+      // Чтение: только свой профиль
+      allow read: if isOwner(userId);
+      // Создание: только при регистрации своего профиля
+      allow create: if isOwner(userId);
+      // Обновление: только свой профиль
+      allow update: if isOwner(userId);
+      // Удаление: только свой профиль
+      allow delete: if isOwner(userId);
+    }
+
+    // Правила для задач (tasks)
+    match /tasks/{taskId} {
+      // Чтение: только свои задачи
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Создание: только со своим userId
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Обновление: только свои задачи
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Удаление: только свои задачи
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Правила для категорий (categories)
+    match /categories/{categoryId} {
+      // Чтение: только свои категории
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Создание: только со своим userId
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Обновление: только свои категории
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Удаление: только свои категории
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Правила для статистики/аналитики (analytics)
+    match /analytics/{userId} {
+      // Чтение: только своя статистика
+      allow read: if isOwner(userId);
+      // Создание: только своя статистика
+      allow create: if isOwner(userId);
+      // Обновление: только своя статистика
+      allow update: if isOwner(userId);
+      // Удаление: только своя статистика
+      allow delete: if isOwner(userId);
+    }
+
+    // Запретить доступ ко всем остальным коллекциям
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import '../services/task_service.dart';
 
-class AnalyticsScreen extends StatelessWidget {
+class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
+
+  @override
+  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
+
+class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  final TaskService _taskService = TaskService();
 
   @override
   Widget build(BuildContext context) {
@@ -13,15 +21,32 @@ class AnalyticsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: false,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          _buildStatCard('Weekly Score', '87%', '+12% vs last week'),
-          const SizedBox(height: 16),
-          _buildStatCard('Tasks Completed', '65', '+8 this week'),
-          const SizedBox(height: 16),
-          _buildStatCard('Focus Hours', '29h', 'Peak: 9:00–11:00'),
-        ],
+      body: StreamBuilder<List<TaskItem>>(
+        stream: _taskService.getTasksStream(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF7B61FF)));
+          }
+
+          final tasks = snapshot.data!;
+          final completedTasks = tasks.where((t) => t.isCompleted).length;
+          final totalTasks = tasks.length;
+          final score = totalTasks == 0 ? 0 : ((completedTasks / totalTasks) * 100).round();
+          
+          // Estimate Focus Hours based on 1 hour per completed task
+          final focusHours = completedTasks;
+
+          return ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              _buildStatCard('Score', '$score%', 'Based on completed tasks'),
+              const SizedBox(height: 16),
+              _buildStatCard('Tasks Completed', '$completedTasks', 'Out of $totalTasks total tasks'),
+              const SizedBox(height: 16),
+              _buildStatCard('Focus Hours', '${focusHours}h', 'Avg. 1h per task'),
+            ],
+          );
+        },
       ),
     );
   }

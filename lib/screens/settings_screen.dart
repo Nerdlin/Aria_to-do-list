@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _aiAutoPlanning = true;
+  bool _pushNotifications = true;
+  bool _smartReminders = true;
+  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -44,11 +54,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           const Divider(height: 1, color: Color(0xFFF3F4F6)),
-          const SizedBox(height: 16),
-          _buildToggle('AI Auto-Planning', 'Let AI schedule your day', true),
-          _buildToggle('Push Notifications', null, true),
-          _buildToggle('Smart Reminders', null, true),
-          _buildToggle('Dark Mode', null, false),
+          _buildToggle('AI Auto-Planning', 'Let AI schedule your day', _aiAutoPlanning, (val) => setState(() => _aiAutoPlanning = val)),
+          _buildToggle('Push Notifications', null, _pushNotifications, (val) => setState(() => _pushNotifications = val)),
+          _buildToggle('Smart Reminders', null, _smartReminders, (val) => setState(() => _smartReminders = val)),
+          _buildToggle('Dark Mode', null, _darkMode, (val) => setState(() => _darkMode = val)),
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFF3F4F6)),
           const SizedBox(height: 16),
@@ -75,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildToggle(String title, String? subtitle, bool value) {
+  Widget _buildToggle(String title, String? subtitle, bool value, ValueChanged<bool> onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
@@ -93,7 +102,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: (val) {},
+            onChanged: onChanged,
             activeColor: const Color(0xFF7B61FF),
             activeTrackColor: const Color(0xFF7B61FF).withOpacity(0.2),
             inactiveThumbColor: const Color(0xFF9CA3AF),

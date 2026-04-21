@@ -1,6 +1,7 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,9 +14,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 2800), () {
+    Timer(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/onboarding');
+      if (FirebaseAuth.instance.currentUser != null) {
+        Navigator.pushReplacementNamed(context, '/shell');
+      } else {
+        Navigator.pushReplacementNamed(context, '/onboarding');
+      }
     });
   }
 
