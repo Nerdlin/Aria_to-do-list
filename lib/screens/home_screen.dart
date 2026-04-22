@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../services/app_controller.dart';
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 import '../widgets/profile_avatar.dart';
 import 'edit_profile_screen.dart';
 import 'tasks_screen.dart';
@@ -52,7 +53,7 @@ class HomeScreen extends StatelessWidget {
             );
             final insight = (profile?.aiAutoPlanning ?? true)
                 ? TaskMetrics.buildInsight(todayTasks.isNotEmpty ? todayTasks : pendingTasks)
-                : 'Turn on AI Auto-Planning in Settings to get live suggestions for your day.';
+                : tr('Turn on AI Auto-Planning in Settings to get live suggestions for your day.');
 
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -87,8 +88,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 74),
                     _SectionHeader(
-                      title: "Today's Schedule",
-                      actionLabel: 'View all',
+                      title: tr("Today's Schedule"),
+                      actionLabel: tr('View all'),
                       onActionTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const TasksScreen()),
                       ),
@@ -98,9 +99,9 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: todayTasks.isEmpty
                           ? _EmptyCard(
-                              title: 'No tasks planned for today',
-                              subtitle: 'Use the + button to add your first task and your Home screen will start updating automatically.',
-                              actionLabel: 'Create task',
+                              title: tr('No tasks planned for today'),
+                              subtitle: tr('Use the + button to add your first task and your Home screen will start updating automatically.'),
+                              actionLabel: tr('Create task'),
                               onTap: () => Navigator.pushNamed(context, '/add-task'),
                             )
                           : Column(
@@ -122,8 +123,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     _SectionHeader(
-                      title: 'Priority Tasks',
-                      actionLabel: 'See all',
+                      title: tr('Priority Tasks'),
+                      actionLabel: tr('See all'),
                       onActionTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const TasksScreen()),
                       ),
@@ -133,9 +134,9 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: priorityTasks.isEmpty
                           ? _EmptyCard(
-                              title: 'Everything is complete',
-                              subtitle: 'You have no pending tasks right now. Add a new one to keep your momentum.',
-                              actionLabel: 'Add task',
+                              title: tr('Everything is complete'),
+                              subtitle: tr('You have no pending tasks right now. Add a new one to keep your momentum.'),
+                              actionLabel: tr('Add task'),
                               onTap: () => Navigator.pushNamed(context, '/add-task'),
                             )
                           : Column(
@@ -164,18 +165,18 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                       borderRadius: BorderRadius.circular(18),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.auto_awesome_rounded,
                                           color: Color(0xFF7C3AED),
                                           size: 18,
                                         ),
-                                        SizedBox(width: 10),
+                                        const SizedBox(width: 10),
                                         Text(
-                                          'Add another task',
-                                          style: TextStyle(
+                                          tr('Add another task'),
+                                          style: const TextStyle(
                                             color: Color(0xFF7C3AED),
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -214,8 +215,8 @@ class HomeScreen extends StatelessWidget {
                             SnackBar(
                               content: Text(
                                 nextValue
-                                    ? 'Focus mode enabled.'
-                                    : 'Focus mode turned off.',
+                                    ? tr('Focus mode enabled.')
+                                    : tr('Focus mode turned off.'),
                               ),
                             ),
                           );
@@ -267,11 +268,11 @@ class HomeScreen extends StatelessWidget {
     final upcomingToday = todayTasks.where((task) => !task.isCompleted).toList();
     final notifications = <String>[
       if (upcomingToday.isNotEmpty)
-        'You still have ${upcomingToday.length} task(s) planned for today.',
+        tr('You still have {count} task(s) planned for today.', namedArgs: {'count': upcomingToday.length.toString()}),
       if (pendingTasks.isNotEmpty)
-        'Highest priority: ${pendingTasks.first.title}.',
+        tr('Highest priority: {title}.', namedArgs: {'title': pendingTasks.first.title}),
       if (todayTasks.where((task) => task.isCompleted).isNotEmpty)
-        'Nice work, you already completed ${todayTasks.where((task) => task.isCompleted).length} today.',
+        tr('Nice work, you already completed {count} today.', namedArgs: {'count': todayTasks.where((task) => task.isCompleted).length.toString()}),
     ];
 
     showModalBottomSheet<void>(
@@ -282,7 +283,7 @@ class HomeScreen extends StatelessWidget {
       ),
       builder: (context) {
         final items = notifications.isEmpty
-            ? const <String>['No alerts right now. Your inbox is clear.']
+            ? <String>[tr('No alerts right now. Your inbox is clear.')]
             : notifications;
 
         return Padding(
@@ -291,9 +292,9 @@ class HomeScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Notifications',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              Text(
+                tr('Notifications'),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               ...items.map(
@@ -344,7 +345,7 @@ class _HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = profile?.displayName ?? 'Aria User';
+    final name = profile?.displayName ?? tr('Aria User');
 
     return Container(
       width: double.infinity,
@@ -462,7 +463,7 @@ class _HomeHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'AI INSIGHT',
+                          tr('AI INSIGHT'),
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.82),
                             fontSize: 12,
@@ -495,12 +496,12 @@ class _HomeHeader extends StatelessWidget {
   String _greeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return 'Good morning';
+      return tr('Good morning');
     }
     if (hour < 18) {
-      return 'Good afternoon';
+      return tr('Good afternoon');
     }
-    return 'Good evening';
+    return tr('Good evening');
   }
 }
 
@@ -523,23 +524,23 @@ class _StatsRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _StatCard(
-          label: 'Tasks Done',
+          label: tr('Tasks Done'),
           value: '$completedToday',
           unit: '/$totalToday',
           color: const Color(0xFF7C3AED),
         ),
         _StatCard(
-          label: 'Focus Time',
+          label: tr('Focus Time'),
           value: (focusMinutesToday / 60).toStringAsFixed(
             focusMinutesToday >= 60 ? 1 : 0,
           ),
-          unit: 'h',
+          unit: tr('h'),
           color: const Color(0xFF3B82F6),
         ),
         _StatCard(
-          label: 'Streak',
+          label: tr('Streak'),
           value: '$streak',
-          unit: 'd',
+          unit: tr('d'),
           color: const Color(0xFF10B981),
         ),
       ],
@@ -696,7 +697,7 @@ class _ScheduleCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${task.durationMinutes} min',
+                    tr('{min} min', namedArgs: {'min': task.durationMinutes.toString()}),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -734,7 +735,7 @@ class _ScheduleCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    task.category,
+                    tr(task.category),
                     style: TextStyle(
                       color: accentColor,
                       fontWeight: FontWeight.w700,
@@ -899,7 +900,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'WEEKLY SCORE',
+                    tr('WEEKLY SCORE'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.68),
                       fontSize: 11,
@@ -925,7 +926,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${change >= 0 ? '+' : ''}$change% vs last week',
+                  tr('{sign}{change}% vs last week', namedArgs: {'sign': change >= 0 ? '+' : '', 'change': change.abs().toString()}),
                   style: const TextStyle(
                     color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.w700,

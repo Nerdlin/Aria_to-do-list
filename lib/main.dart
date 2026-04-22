@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'screens/add_task_screen.dart';
 import 'screens/auth_screen.dart';
@@ -11,6 +12,10 @@ import 'widgets/app_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   await Firebase.initializeApp();
   await AppController.instance.init();
   runApp(const AriaApp());

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../screens/ai_assistant_screen.dart';
 import '../screens/analytics_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/tasks_screen.dart';
+import '../utils/translations.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -23,6 +25,7 @@ class _AppShellState extends State<AppShell> {
   late final List<Widget> _pages = const [
     HomeScreen(),
     TasksScreen(),
+    AiAssistantScreen(),
     AnalyticsScreen(),
     SettingsScreen(),
   ];
@@ -84,38 +87,60 @@ class _AppShellState extends State<AppShell> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(
-              activeIcon: Icons.home_rounded,
-              inactiveIcon: Icons.home_outlined,
-              label: 'Home',
-              index: 0,
-              activeColor: activeColor,
-              inactiveColor: inactiveColor,
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(
+                    activeIcon: Icons.home_rounded,
+                    inactiveIcon: Icons.home_outlined,
+                    label: tr('Home'),
+                    index: 0,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                  ),
+                  _buildNavItem(
+                    activeIcon: Icons.check_box_rounded,
+                    inactiveIcon: Icons.check_box_outlined,
+                    label: tr('Tasks'),
+                    index: 1,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                  ),
+                ],
+              ),
             ),
-            _buildNavItem(
-              activeIcon: Icons.check_box_rounded,
-              inactiveIcon: Icons.check_box_outlined,
-              label: 'Tasks',
-              index: 1,
-              activeColor: activeColor,
-              inactiveColor: inactiveColor,
-            ),
-            const SizedBox(width: 48),
-            _buildNavItem(
-              activeIcon: Icons.bar_chart_rounded,
-              inactiveIcon: Icons.bar_chart_outlined,
-              label: 'Analytics',
-              index: 2,
-              activeColor: activeColor,
-              inactiveColor: inactiveColor,
-            ),
-            _buildNavItem(
-              activeIcon: Icons.settings_rounded,
-              inactiveIcon: Icons.settings_outlined,
-              label: 'Settings',
-              index: 3,
-              activeColor: activeColor,
-              inactiveColor: inactiveColor,
+            const SizedBox(width: 56), // Exact space for FAB in center
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(
+                    activeIcon: Icons.psychology_rounded,
+                    inactiveIcon: Icons.psychology_outlined,
+                    label: tr('AI'),
+                    index: 2,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                  ),
+                  _buildNavItem(
+                    activeIcon: Icons.bar_chart_rounded,
+                    inactiveIcon: Icons.bar_chart_outlined,
+                    label: tr('Stats'),
+                    index: 3,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                  ),
+                  _buildNavItem(
+                    activeIcon: Icons.settings_rounded,
+                    inactiveIcon: Icons.settings_outlined,
+                    label: tr('Settings'),
+                    index: 4,
+                    activeColor: activeColor,
+                    inactiveColor: inactiveColor,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -138,7 +163,7 @@ class _AppShellState extends State<AppShell> {
       onTap: () => setState(() => _currentIndex = index),
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? activeColor.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
@@ -147,12 +172,12 @@ class _AppShellState extends State<AppShell> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isActive ? activeIcon : inactiveIcon, color: color, size: 24),
+            Icon(isActive ? activeIcon : inactiveIcon, color: color, size: 22),
             const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
                 color: color,
               ),

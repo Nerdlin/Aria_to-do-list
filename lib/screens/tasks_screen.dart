@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -87,16 +88,16 @@ class _TasksScreenState extends State<TasksScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Smart queue',
-                                      style: TextStyle(
+                                    Text(
+                                      tr('Smart queue'),
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 16,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Tap a task to mark it done. Delete the ones you no longer need.',
+                                      tr('Tap a task to mark it done. Delete the ones you no longer need.'),
                                       style: TextStyle(
                                         color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
                                         height: 1.45,
@@ -119,9 +120,9 @@ class _TasksScreenState extends State<TasksScreen> {
                       onChanged: (value) {
                         setState(() => _searchQuery = value.toLowerCase());
                       },
-                      decoration: const InputDecoration(
-                        hintText: 'Search tasks',
-                        prefixIcon: Icon(Icons.search_rounded),
+                      decoration: InputDecoration(
+                        hintText: tr('Search tasks...'),
+                        prefixIcon: const Icon(Icons.search_rounded),
                       ),
                     ),
                   ),
@@ -170,16 +171,16 @@ class _TasksScreenState extends State<TasksScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
-                              'No tasks match this filter.',
-                              style: TextStyle(
+                            Text(
+                              tr('No tasks match the selected filter.'),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Try another filter or create a new task from the center button.',
+                              tr('Try another filter or create a new task from the center button.'),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
@@ -212,15 +213,17 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label) {
-    final isActive = _activeFilter == label;
+  Widget _buildFilterChip(String filter) {
+    final isSelected = _activeFilter == filter;
+    final theme = Theme.of(context);
+    final color = isSelected ? const Color(0xFF7C3AED) : theme.colorScheme.onSurface.withValues(alpha: 0.1);
 
     return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isActive,
-        onSelected: (_) => setState(() => _activeFilter = label),
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(tr(filter)),
+        selected: isSelected,
+        onSelected: (_) => setState(() => _activeFilter = filter),
       ),
     );
   }

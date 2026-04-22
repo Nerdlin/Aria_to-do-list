@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../models/user_profile.dart';
 import '../services/app_controller.dart';
+import '../utils/translations.dart';
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
 import '../widgets/profile_avatar.dart';
@@ -21,6 +22,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ListenableBuilder(
       listenable: AppController.instance,
       builder: (context, _) {
@@ -62,22 +65,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 12),
                             _SettingsSection(
-                              title: 'AI FEATURES',
+                              title: tr('AI FEATURES'),
                               accentColor: const Color(0xFF8B5CF6),
                               children: [
                                 _SettingRow(
                                   icon: Icons.auto_awesome_rounded,
-                                  label: 'AI Auto-Planning',
-                                  subtitle: 'Let Aria suggest your next move',
+                                  label: tr('AI Auto-Planning'),
+                                  subtitle: tr('Let Aria suggest your next move'),
                                   color: const Color(0xFF8B5CF6),
                                   value: profile?.aiAutoPlanning ?? true,
                                   onChanged: (value) => AppController.instance
                                       .updatePreferences(aiAutoPlanning: value),
                                 ),
                                 _SettingRow(
-                                  icon: Icons.bolt_rounded,
-                                  label: 'Smart Prioritization',
-                                  subtitle: 'Rank tasks by impact and urgency',
+                                  icon: Icons.psychology_rounded,
+                                  label: tr('Smart Prioritization'),
+                                  subtitle: tr('Rank tasks by impact and urgency'),
                                   color: const Color(0xFF6366F1),
                                   value: profile?.smartPrioritization ?? true,
                                   onChanged: (value) => AppController.instance
@@ -85,17 +88,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                                 _SettingRow(
                                   icon: Icons.access_time_rounded,
-                                  label: 'Smart Reminders',
-                                  subtitle: 'Keep nudges useful instead of noisy',
+                                  label: tr('Smart Reminders'),
+                                  subtitle: tr('Keep nudges useful instead of noisy'),
                                   color: const Color(0xFFF59E0B),
                                   value: profile?.smartReminders ?? true,
                                   onChanged: (value) => AppController.instance
                                       .updatePreferences(smartReminders: value),
                                 ),
                                 _SettingRow(
-                                  icon: Icons.track_changes_rounded,
-                                  label: 'AI Focus Mode',
-                                  subtitle: 'Protect deep work sessions',
+                                  icon: Icons.center_focus_strong_rounded,
+                                  label: tr('AI Focus Mode'),
+                                  subtitle: tr('Protect deep work sessions'),
                                   color: const Color(0xFF10B981),
                                   value: profile?.focusMode ?? false,
                                   onChanged: (value) => AppController.instance
@@ -105,30 +108,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 12),
                             _SettingsSection(
-                              title: 'NOTIFICATIONS',
+                              title: tr('NOTIFICATIONS'),
                               children: [
                                 _SettingRow(
-                                  icon: Icons.notifications_active_outlined,
-                                  label: 'Push Notifications',
-                                  subtitle: 'Task reminders and quick updates',
+                                  icon: Icons.notifications_active_rounded,
+                                  label: tr('Push Notifications'),
+                                  subtitle: tr('Task reminders and quick updates'),
                                   color: const Color(0xFF60A5FA),
                                   value: profile?.pushNotifications ?? true,
                                   onChanged: (value) => AppController.instance
                                       .updatePreferences(pushNotifications: value),
                                 ),
                                 _SettingRow(
-                                  icon: Icons.wb_sunny_outlined,
-                                  label: 'Daily Digest',
-                                  subtitle: 'Morning summary of your day',
+                                  icon: Icons.mail_outline_rounded,
+                                  label: tr('Daily Digest'),
+                                  subtitle: tr('Morning summary of your day'),
                                   color: const Color(0xFF8B5CF6),
                                   value: profile?.dailyDigest ?? true,
                                   onChanged: (value) => AppController.instance
                                       .updatePreferences(dailyDigest: value),
                                 ),
                                 _SettingRow(
-                                  icon: Icons.bar_chart_rounded,
-                                  label: 'Weekly Report',
-                                  subtitle: 'Progress snapshot every week',
+                                  icon: Icons.pie_chart_outline_rounded,
+                                  label: tr('Weekly Report'),
+                                  subtitle: tr('Progress snapshot every week'),
                                   color: const Color(0xFF10B981),
                                   value: profile?.weeklyReport ?? true,
                                   onChanged: (value) => AppController.instance
@@ -138,29 +141,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 12),
                             _SettingsSection(
-                              title: 'APPEARANCE',
+                              title: tr('APPEARANCE'),
                               children: [
                                 _SettingRow(
-                                  icon: Icons.dark_mode_outlined,
-                                  label: 'Dark Mode',
-                                  subtitle: 'Switch instantly between light and dark',
-                                  color: const Color(0xFF8B5CF6),
-                                  value: AppController.instance.themeMode == ThemeMode.dark,
-                                  onChanged: (value) => AppController.instance
-                                      .updatePreferences(
-                                    themeMode: value ? 'dark' : 'light',
-                                  ),
-                                ),
-                                _SettingRow(
-                                  icon: Icons.palette_outlined,
-                                  label: 'App Theme',
-                                  subtitle: _themeLabel(AppController.instance.themeMode),
+                                  icon: Icons.palette_rounded,
+                                  label: tr('Theme'),
+                                  subtitle: _themeLabel(profile?.themeModeName ?? 'light'),
                                   color: const Color(0xFF8B5CF6),
                                   onTap: _showThemePicker,
                                 ),
                                 _SettingRow(
                                   icon: Icons.language_rounded,
-                                  label: 'Language',
+                                  label: tr('Language'),
                                   subtitle: _languageLabel(profile?.languageCode ?? 'en'),
                                   color: const Color(0xFF10B981),
                                   onTap: _showLanguagePicker,
@@ -169,33 +161,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 12),
                             _SettingsSection(
-                              title: 'ACCOUNT',
+                              title: tr('ACCOUNT'),
                               children: [
                                 _SettingRow(
                                   icon: Icons.person_outline_rounded,
-                                  label: 'Profile & Account',
-                                  subtitle: 'Update your name, photo, and email',
+                                  label: tr('Profile & Account'),
+                                  subtitle: tr('Update your name, photo, and email'),
                                   color: const Color(0xFF64748B),
                                   onTap: () => _openProfileEditor(profile),
                                 ),
                                 _SettingRow(
                                   icon: Icons.shield_outlined,
-                                  label: 'Privacy & Security',
-                                  subtitle: 'Password reset and account safety',
+                                  label: tr('Privacy & Security'),
+                                  subtitle: tr('Password reset and account safety'),
                                   color: const Color(0xFF10B981),
                                   onTap: () => _showSecuritySheet(profile),
                                 ),
                                 _SettingRow(
                                   icon: Icons.workspace_premium_outlined,
-                                  label: 'Subscription',
-                                  subtitle: '${profile?.planName ?? 'Pro'} plan details',
+                                  label: tr('Subscription'),
+                                  subtitle: tr('${profile?.planName ?? 'Pro'} plan details'),
                                   color: const Color(0xFFF59E0B),
                                   onTap: _showSubscriptionSheet,
                                 ),
                                 _SettingRow(
                                   icon: Icons.help_outline_rounded,
-                                  label: 'Help & Support',
-                                  subtitle: 'FAQ, support email, and feedback',
+                                  label: tr('Help & Support'),
+                                  subtitle: tr('FAQ, support email, and feedback'),
                                   color: const Color(0xFF60A5FA),
                                   onTap: _showHelpSheet,
                                 ),
@@ -214,23 +206,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
+                                  color: theme.cardColor,
                                   borderRadius: BorderRadius.circular(18),
                                   border: Border.all(
                                     color: const Color(0xFFFECACA),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.logout_rounded,
                                       color: Color(0xFFEF4444),
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Sign Out',
-                                      style: TextStyle(
+                                      tr('Sign Out'),
+                                      style: const TextStyle(
                                         color: Color(0xFFEF4444),
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -245,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 'Aria v2.4.1',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context)
+                                  color: theme
                                       .colorScheme
                                       .onSurface
                                       .withValues(alpha: 0.45),
@@ -280,42 +272,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _showThemePicker() async {
     await _showOptionsSheet(
-      title: 'Choose theme',
-      options: [
-        _OptionItem(
-          title: 'Light',
-          subtitle: 'Bright interface for daytime work',
-          onTap: () => AppController.instance.updatePreferences(themeMode: 'light'),
-        ),
-        _OptionItem(
-          title: 'Dark',
-          subtitle: 'Lower glare for late sessions',
-          onTap: () => AppController.instance.updatePreferences(themeMode: 'dark'),
-        ),
-        _OptionItem(
-          title: 'System',
-          subtitle: 'Follow your device appearance',
-          onTap: () => AppController.instance.updatePreferences(themeMode: 'system'),
-        ),
-      ],
+      title: tr('Choose theme'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: Text(tr('Light')),
+            onTap: () => AppController.instance.updatePreferences(themeMode: 'light'),
+          ),
+          ListTile(
+            title: Text(tr('Dark')),
+            onTap: () => AppController.instance.updatePreferences(themeMode: 'dark'),
+          ),
+          ListTile(
+            title: Text(tr('System')),
+            onTap: () => AppController.instance.updatePreferences(themeMode: 'system'),
+          ),
+        ],
+      ),
     );
   }
 
   Future<void> _showLanguagePicker() async {
     await _showOptionsSheet(
-      title: 'Choose language',
-      options: [
-        _OptionItem(
-          title: 'English',
-          subtitle: 'Current UI language',
-          onTap: () => AppController.instance.updatePreferences(languageCode: 'en'),
-        ),
-        _OptionItem(
-          title: 'Russian',
-          subtitle: 'Store your preference for future localization',
-          onTap: () => AppController.instance.updatePreferences(languageCode: 'ru'),
-        ),
-      ],
+      title: tr('Choose language'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: Text(tr('English')),
+            subtitle: Text(tr('Current UI language')),
+            onTap: () => AppController.instance.updatePreferences(languageCode: 'en'),
+          ),
+          ListTile(
+            title: Text(tr('Russian')),
+            onTap: () => AppController.instance.updatePreferences(languageCode: 'ru'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -333,13 +327,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Privacy & Security',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              Text(
+                tr('Privacy & Security'),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               Text(
-                'Signed in as ${profile?.email ?? FirebaseAuth.instance.currentUser?.email ?? 'unknown email'}',
+                tr('Signed in as {}', namedArgs: {'email': profile?.email ?? FirebaseAuth.instance.currentUser?.email ?? tr('unknown email')}),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
                 ),
@@ -359,15 +353,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                   navigator.pop();
                   messenger.showSnackBar(
-                    SnackBar(content: Text('Password reset email sent to $email.')),
+                    SnackBar(content: Text(tr('Password reset email sent to {}', namedArgs: {'email': email}))),
                   );
                 },
                 icon: const Icon(Icons.lock_reset_rounded),
-                label: const Text('Send password reset email'),
+                label: Text(tr('Send password reset email')),
               ),
               const SizedBox(height: 12),
               Text(
-                'Your personal data and task collection are scoped to your account in Firestore.',
+                tr('Your personal data and task collection are scoped to your account in Firestore.'),
                 style: TextStyle(
                   height: 1.5,
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.68),
@@ -388,20 +382,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) {
-        return const Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 28),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Subscription',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                tr('Subscription'),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
-              SizedBox(height: 14),
+              const SizedBox(height: 14),
               Text(
-                'Aria Pro is currently represented as an in-app profile tier. Billing is not wired to a payment provider in this project yet, but the settings page now opens plan details instead of doing nothing.',
-                style: TextStyle(height: 1.5),
+                tr('Aria Pro is currently represented as an in-app profile tier. Billing is not wired to a payment provider in this project yet, but the settings page now opens plan details instead of doing nothing.'),
+                style: const TextStyle(height: 1.5),
               ),
             ],
           ),
@@ -424,20 +418,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Help & Support',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              Text(
+                tr('Help & Support'),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
-              const _SupportRow(
-                title: 'FAQ',
-                subtitle: 'Tap profile photo to edit your account. Tap tasks to complete them.',
+              _SupportRow(
+                title: tr('FAQ'),
+                subtitle: tr('Tap profile photo to edit your account. Tap tasks to complete them.'),
               ),
               const SizedBox(height: 10),
               _SupportRow(
-                title: 'Support email',
+                title: tr('Support email'),
                 subtitle: 'support@aria.app',
-                actionLabel: 'Copy',
+                actionLabel: tr('Copy'),
                 onTap: () async {
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(this.context);
@@ -449,14 +443,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                   navigator.pop();
                   messenger.showSnackBar(
-                    const SnackBar(content: Text('Support email copied.')),
+                    SnackBar(content: Text(tr('Support email copied.'))),
                   );
                 },
               ),
               const SizedBox(height: 10),
-              const _SupportRow(
-                title: 'Feedback',
-                subtitle: 'Use your task notes or profile editor to capture feedback for now.',
+              _SupportRow(
+                title: tr('Feedback'),
+                subtitle: tr('Use your task notes or profile editor to capture feedback for now.'),
               ),
             ],
           ),
@@ -467,7 +461,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _showOptionsSheet({
     required String title,
-    required List<_OptionItem> options,
+    required Widget content,
   }) async {
     showModalBottomSheet<void>(
       context: context,
@@ -487,46 +481,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
-              ...options.map(
-                (option) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    onTap: () async {
-                      final navigator = Navigator.of(context);
-                      await option.onTap();
-                      if (!context.mounted) {
-                        return;
-                      }
-                      navigator.pop();
-                    },
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF172033)
-                            : const Color(0xFFF8F7FF),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            option.title,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(option.subtitle),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              content,
             ],
           ),
         );
@@ -534,24 +489,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  String _themeLabel(ThemeMode themeMode) {
-    switch (themeMode) {
-      case ThemeMode.dark:
-        return 'Dark';
-      case ThemeMode.system:
-        return 'System';
-      case ThemeMode.light:
-        return 'Light';
+  String _themeLabel(String themeModeName) {
+    switch (themeModeName) {
+      case 'dark':
+        return tr('Dark');
+      case 'system':
+        return tr('System');
+      case 'light':
+      default:
+        return tr('Light');
     }
   }
 
   String _languageLabel(String languageCode) {
     switch (languageCode) {
       case 'ru':
-        return 'Russian';
+        return tr('Russian');
       case 'en':
       default:
-        return 'English';
+        return tr('English');
     }
   }
 }
@@ -585,7 +541,7 @@ class _ProfileCard extends StatelessWidget {
         child: Row(
           children: [
             ProfileAvatar(
-              displayName: safeProfile?.displayName ?? 'Aria User',
+              displayName: safeProfile?.displayName ?? tr('Aria User'),
               avatarSeed: safeProfile?.avatarSeed ?? 0,
               imagePath: safeProfile?.localAvatarPath,
               size: 58,
@@ -598,7 +554,7 @@ class _ProfileCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    safeProfile?.displayName ?? 'Aria User',
+                    safeProfile?.displayName ?? tr('Aria User'),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -607,7 +563,7 @@ class _ProfileCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    safeProfile?.email ?? 'No email available',
+                    safeProfile?.email ?? tr('No email available'),
                     style: const TextStyle(
                       color: Color(0xD9FFFFFF),
                       fontSize: 13,
@@ -618,8 +574,8 @@ class _ProfileCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _ProfileBadge(label: '${safeProfile?.planName ?? 'Pro'} Plan'),
-                      _ProfileBadge(label: '$streak-day streak'),
+                      _ProfileBadge(label: tr('{} Plan', namedArgs: {'plan': safeProfile?.planName ?? 'Pro'})),
+                      _ProfileBadge(label: tr('{}-day streak', namedArgs: {'days': '$streak'})),
                     ],
                   ),
                 ],

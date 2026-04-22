@@ -252,15 +252,15 @@ class TaskMetrics {
   }
 
   static String buildInsight(List<TaskItem> tasks) {
-    final pending = tasks.where((task) => !task.isCompleted).toList()
-      ..sort((first, second) {
-        final weightCompare =
-            priorityWeight(second.priority).compareTo(priorityWeight(first.priority));
-        if (weightCompare != 0) {
-          return weightCompare;
-        }
-        return first.date.compareTo(second.date);
-      });
+    final pending = tasks.where((task) => !task.isCompleted).toList();
+    pending.sort((first, second) {
+      final weightCompare =
+          priorityWeight(second.priority).compareTo(priorityWeight(first.priority));
+      if (weightCompare != 0) {
+        return weightCompare;
+      }
+      return first.date.compareTo(second.date);
+    });
 
     if (pending.isEmpty) {
       return 'You are all caught up. Add a new task to keep the momentum going.';

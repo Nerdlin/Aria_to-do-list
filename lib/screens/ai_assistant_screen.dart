@@ -1,0 +1,516 @@
+import 'package:flutter/material.dart';
+
+import '../services/ai_service.dart';
+import '../services/task_service.dart';
+
+class AiAssistantScreen extends StatefulWidget {
+  const AiAssistantScreen({super.key});
+
+  @override
+  State<AiAssistantScreen> createState() => _AiAssistantScreenState();
+}
+
+class _AiAssistantScreenState extends State<AiAssistantScreen> {
+  final AiService _aiService = AiService();
+  final TaskService _taskService = TaskService();
+  final TextEditingController _inputController = TextEditingController();
+
+  bool _isLoading = false;
+  String? _response;
+  String _selectedMode = 'insights';
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'AI Assistant',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Get smart insights and recommendations',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _ModeChip(
+                      label: 'Insights',
+                      icon: Icons.lightbulb_outline,
+                      selected: _selectedMode == 'insights',
+                      onTap: () => setState(() => _selectedMode = 'insights'),
+                    ),
+                    _ModeChip(
+                      label: 'Schedule',
+                      icon: Icons.calendar_today,
+                      selected: _selectedMode == 'schedule',
+                      onTap: () => setState(() => _selectedMode = 'schedule'),
+                    ),
+                    _ModeChip(
+                      label: 'Breakdown',
+                      icon: Icons.list_alt,
+                      selected: _selectedMode == 'breakdown',
+                      onTap: () => setState(() => _selectedMode = 'breakdown'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                child: Column(
+                  children: [
+                    if (_response != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'AI Recommendation',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              _response!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_response != null) const SizedBox(height: 16),
+                    _buildQuickActions(isDark, theme),
+                    const SizedBox(height: 16),
+                    _buildFeatureCards(isDark, theme),
+                  ],
+                ),
+              ),
+            ),
+            if (_selectedMode == 'breakdown')
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF111827) : Colors.white,
+                  border: Border(
+                    top: BorderSide(color: theme.dividerColor),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _inputController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter task title...',
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton(
+                      onPressed: _isLoading ? null : _handleBreakdown,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.send),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(bool isDark, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Quick Actions',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          _ActionButton(
+            icon: Icons.insights,
+            label: 'Analyze My Productivity',
+            onTap: _isLoading ? null : _handleInsights,
+            isLoading: _isLoading && _selectedMode == 'insights',
+          ),
+          const SizedBox(height: 8),
+          _ActionButton(
+            icon: Icons.schedule,
+            label: 'Suggest Optimal Schedule',
+            onTap: _isLoading ? null : _handleSchedule,
+            isLoading: _isLoading && _selectedMode == 'schedule',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureCards(bool isDark, ThemeData theme) {
+    return Column(
+      children: [
+        _FeatureCard(
+          icon: Icons.psychology,
+          title: 'Smart Prioritization',
+          description: 'AI analyzes your tasks and suggests optimal priorities',
+          color: const Color(0xFF8B5CF6),
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        _FeatureCard(
+          icon: Icons.auto_graph,
+          title: 'Productivity Insights',
+          description: 'Get personalized recommendations based on your patterns',
+          color: const Color(0xFF10B981),
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+        _FeatureCard(
+          icon: Icons.task_alt,
+          title: 'Task Breakdown',
+          description: 'Break complex tasks into manageable steps',
+          color: const Color(0xFF60A5FA),
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleInsights() async {
+    setState(() {
+      _isLoading = true;
+      _selectedMode = 'insights';
+      _response = null;
+    });
+
+    try {
+      final tasks = await _taskService.getTasksStream().first;
+      final insights = await _aiService.generateProductivityInsights(tasks);
+      setState(() => _response = insights);
+    } catch (e) {
+      _showError('Failed to generate insights');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleSchedule() async {
+    setState(() {
+      _isLoading = true;
+      _selectedMode = 'schedule';
+      _response = null;
+    });
+
+    try {
+      final tasks = await _taskService.getTasksStream().first;
+      final pending = tasks.where((t) => !t.isCompleted).toList();
+      final schedule = await _aiService.suggestOptimalSchedule(pending);
+      setState(() => _response = schedule);
+    } catch (e) {
+      _showError('Failed to generate schedule');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleBreakdown() async {
+    final title = _inputController.text.trim();
+    if (title.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _response = null;
+    });
+
+    try {
+      final breakdown = await _aiService.suggestTaskBreakdown(title);
+      setState(() => _response = breakdown);
+      _inputController.clear();
+    } catch (e) {
+      _showError('Failed to break down task');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                  )
+                : null,
+            color: selected ? null : Theme.of(context).dividerColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.isLoading,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (isLoading)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              const Icon(Icons.arrow_forward_ios, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.64),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

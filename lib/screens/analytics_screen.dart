@@ -622,8 +622,8 @@ class _CategoryBreakdownCard extends StatelessWidget {
         ? const <MapEntry<String, int>>[
             MapEntry<String, int>('No tasks yet', 0),
           ]
-        : categories.entries.toList()
-          ..sort((first, second) => second.value.compareTo(first.value));
+        : (categories.entries.toList()
+          ..sort((first, second) => second.value.compareTo(first.value)));
 
     return Container(
       padding: const EdgeInsets.all(18),

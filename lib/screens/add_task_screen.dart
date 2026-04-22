@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../services/ai_service.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -16,6 +18,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TaskService _taskService = TaskService();
+  final AiService _aiService = AiService();
 
   final List<String> _allSuggestions = const [
     'Review project roadmap',
@@ -73,9 +76,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'New Task',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          tr('New Task'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -90,9 +93,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
-                    'Save',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                : Text(
+                    tr('Save'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),
         ],
@@ -104,16 +107,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           children: [
             _buildSection(
               context,
-              title: 'Task Details',
+              title: tr('Task Details'),
               child: Column(
                 children: [
                   TextField(
                     controller: _titleController,
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Task title',
-                      prefixIcon: Icon(Icons.flag_outlined),
+                    decoration: InputDecoration(
+                      labelText: tr('Task title'),
+                      prefixIcon: const Icon(Icons.flag_outlined),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -121,10 +124,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     controller: _noteController,
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes (optional)',
+                    decoration: InputDecoration(
+                      labelText: tr('Notes (optional)'),
                       alignLabelWithHint: true,
-                      prefixIcon: Icon(Icons.notes_rounded),
+                      prefixIcon: const Icon(Icons.notes_rounded),
                     ),
                   ),
                 ],
@@ -133,12 +136,26 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 16),
             _buildSection(
               context,
-              title: 'AI Suggestions',
-              trailing: IconButton(
-                onPressed: () {
-                  setState(() => _suggestions = _buildSuggestions());
-                },
-                icon: const Icon(Icons.refresh_rounded),
+              title: tr('AI Suggestions'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_titleController.text.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: _isLoading ? null : _analyzeTaskPriority,
+                      icon: const Icon(Icons.psychology, size: 18),
+                      label: Text(tr('Analyze')),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF7C3AED),
+                      ),
+                    ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() => _suggestions = _buildSuggestions());
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                ],
               ),
               child: Column(
                 children: _suggestions
@@ -183,7 +200,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 16),
             _buildSection(
               context,
-              title: 'Category',
+              title: tr('Category'),
               child: GridView.builder(
                 itemCount: _categories.length,
                 shrinkWrap: true,
@@ -224,7 +241,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            category['label'] as String,
+                            tr(category['label'] as String),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -243,7 +260,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 16),
             _buildSection(
               context,
-              title: 'Priority & Focus',
+              title: tr('Priority & Focus'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -253,7 +270,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     children: ['Low', 'Medium', 'High']
                         .map(
                           (priority) => ChoiceChip(
-                            label: Text(priority),
+                            label: Text(tr(priority)),
                             selected: _selectedPriority == priority,
                             onSelected: (_) {
                               setState(() => _selectedPriority = priority);
@@ -264,7 +281,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Estimated focus time',
+                    tr('Estimated focus time'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w600,
@@ -277,7 +294,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     children: _durationOptions
                         .map(
                           (duration) => ChoiceChip(
-                            label: Text('$duration min'),
+                            label: Text('$duration ${tr('min')}'),
                             selected: _selectedDuration == duration,
                             onSelected: (_) {
                               setState(() => _selectedDuration = duration);
@@ -291,12 +308,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     value: _isAiPick,
                     onChanged: (value) => setState(() => _isAiPick = value),
                     contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'Mark as AI recommended',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    title: Text(
+                      tr('Mark as AI recommended'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    subtitle: const Text(
-                      'Helps Home and Analytics highlight this task.',
+                    subtitle: Text(
+                      tr('Helps Home and Analytics highlight this task.'),
                     ),
                   ),
                 ],
@@ -305,7 +322,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 16),
             _buildSection(
               context,
-              title: 'Schedule',
+              title: tr('Schedule'),
               child: InkWell(
                 onTap: _pickDateTime,
                 borderRadius: BorderRadius.circular(18),
@@ -454,14 +471,65 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         return;
       }
 
-      Navigator.pop(context, true);
-    } catch (_) {
+      Navigator.pop(context);
+    } catch (error) {
       if (!mounted) {
         return;
       }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to save task right now.')),
+        SnackBar(content: Text('Error saving task: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _analyzeTaskPriority() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final analysis = await _aiService.analyzeTaskPriority(
+        title: title,
+        category: _selectedCategory,
+        dueDate: _selectedDate,
+        note: _noteController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
+              SizedBox(width: 8),
+              Text('AI Analysis'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              analysis,
+              style: const TextStyle(height: 1.6),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to analyze task')),
       );
     } finally {
       if (mounted) {
