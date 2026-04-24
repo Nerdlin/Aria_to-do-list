@@ -54,7 +54,8 @@ class _TasksScreenState extends State<TasksScreen> {
                         Text(
                           '${TaskMetrics.completedCount(allTasks)} completed, ${allTasks.where((task) => !task.isCompleted).length} still in motion',
                           style: TextStyle(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.68),
                             fontSize: 15,
                           ),
                         ),
@@ -73,7 +74,10 @@ class _TasksScreenState extends State<TasksScreen> {
                                 height: 54,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                                    colors: [
+                                      Color(0xFF8B5CF6),
+                                      Color(0xFF6366F1)
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(18),
                                 ),
@@ -99,7 +103,8 @@ class _TasksScreenState extends State<TasksScreen> {
                                     Text(
                                       tr('Tap a task to mark it done. Delete the ones you no longer need.'),
                                       style: TextStyle(
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.68),
                                         height: 1.45,
                                       ),
                                     ),
@@ -115,7 +120,8 @@ class _TasksScreenState extends State<TasksScreen> {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
                     child: TextField(
                       onChanged: (value) {
                         setState(() => _searchQuery = value.toLowerCase());
@@ -183,7 +189,8 @@ class _TasksScreenState extends State<TasksScreen> {
                               tr('Try another filter or create a new task from the center button.'),
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.68),
                               ),
                             ),
                           ],
@@ -215,8 +222,6 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Widget _buildFilterChip(String filter) {
     final isSelected = _activeFilter == filter;
-    final theme = Theme.of(context);
-    final color = isSelected ? const Color(0xFF7C3AED) : theme.colorScheme.onSurface.withValues(alpha: 0.1);
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -252,14 +257,17 @@ class _TasksScreenState extends State<TasksScreen> {
               height: 28,
               margin: const EdgeInsets.only(top: 2),
               decoration: BoxDecoration(
-                color: task.isCompleted ? const Color(0xFF7C3AED) : Colors.transparent,
+                color: task.isCompleted
+                    ? const Color(0xFF7C3AED)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(9),
                 border: task.isCompleted
                     ? null
                     : Border.all(color: theme.colorScheme.outline, width: 2),
               ),
               child: task.isCompleted
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 19)
+                  ? const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 19)
                   : null,
             ),
             const SizedBox(width: 14),
@@ -277,10 +285,12 @@ class _TasksScreenState extends State<TasksScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: task.isCompleted
-                                ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+                                ? theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.45)
                                 : theme.colorScheme.onSurface,
-                            decoration:
-                                task.isCompleted ? TextDecoration.lineThrough : null,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
                         ),
                       ),
@@ -291,7 +301,8 @@ class _TasksScreenState extends State<TasksScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                            color:
+                                const Color(0xFF7C3AED).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Row(
@@ -324,7 +335,8 @@ class _TasksScreenState extends State<TasksScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         height: 1.4,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.68),
                       ),
                     ),
                   ],
@@ -386,7 +398,9 @@ class _TasksScreenState extends State<TasksScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
+        color: isDark
+            ? color.withValues(alpha: 0.15)
+            : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -457,4 +471,3 @@ class _TasksScreenState extends State<TasksScreen> {
     }
   }
 }
-

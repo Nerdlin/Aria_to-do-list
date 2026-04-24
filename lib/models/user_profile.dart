@@ -43,8 +43,8 @@ class UserProfile {
     Map<String, dynamic> data, {
     String? localAvatarPath,
   }) {
-    final preferences =
-        (data['preferences'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+    final preferences = (data['preferences'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
 
     return UserProfile(
       uid: uid,
@@ -71,13 +71,14 @@ class UserProfile {
   factory UserProfile.fallback(
     User user, {
     String? localAvatarPath,
+    String languageCode = 'en',
   }) {
     return UserProfile(
       uid: user.uid,
       displayName: _defaultDisplayName(user.email, user.displayName),
       email: user.email ?? '',
       themeModeName: 'light',
-      languageCode: 'en',
+      languageCode: languageCode,
       aiAutoPlanning: true,
       smartPrioritization: true,
       smartReminders: true,
@@ -167,7 +168,8 @@ class UserProfile {
         .split(' ')
         .where((part) => part.trim().isNotEmpty)
         .map(
-          (part) => '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+          (part) =>
+              '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
         )
         .toList();
 

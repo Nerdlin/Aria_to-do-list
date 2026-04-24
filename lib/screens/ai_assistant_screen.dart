@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/ai_service.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -41,7 +42,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AI Assistant',
+                    tr('AI Assistant'),
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -50,9 +51,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Get smart insights and recommendations',
+                    tr('Get smart insights and recommendations'),
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.64),
                     ),
                   ),
                 ],
@@ -65,19 +67,19 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 child: Row(
                   children: [
                     _ModeChip(
-                      label: 'Insights',
+                      label: tr('Insights'),
                       icon: Icons.lightbulb_outline,
                       selected: _selectedMode == 'insights',
                       onTap: () => setState(() => _selectedMode = 'insights'),
                     ),
                     _ModeChip(
-                      label: 'Schedule',
+                      label: tr('Schedule'),
                       icon: Icons.calendar_today,
                       selected: _selectedMode == 'schedule',
                       onTap: () => setState(() => _selectedMode = 'schedule'),
                     ),
                     _ModeChip(
-                      label: 'Breakdown',
+                      label: tr('Breakdown'),
                       icon: Icons.list_alt,
                       selected: _selectedMode == 'breakdown',
                       onTap: () => setState(() => _selectedMode = 'breakdown'),
@@ -120,9 +122,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'AI Recommendation',
-                                  style: TextStyle(
+                                Text(
+                                  tr('AI Recommendation'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -165,7 +167,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       child: TextField(
                         controller: _inputController,
                         decoration: InputDecoration(
-                          hintText: 'Enter task title...',
+                          hintText: tr('Enter task title...'),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
@@ -216,21 +218,21 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          Text(
+            tr('Quick Actions'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           _ActionButton(
             icon: Icons.insights,
-            label: 'Analyze My Productivity',
+            label: tr('Analyze My Productivity'),
             onTap: _isLoading ? null : _handleInsights,
             isLoading: _isLoading && _selectedMode == 'insights',
           ),
           const SizedBox(height: 8),
           _ActionButton(
             icon: Icons.schedule,
-            label: 'Suggest Optimal Schedule',
+            label: tr('Suggest Optimal Schedule'),
             onTap: _isLoading ? null : _handleSchedule,
             isLoading: _isLoading && _selectedMode == 'schedule',
           ),
@@ -244,24 +246,26 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       children: [
         _FeatureCard(
           icon: Icons.psychology,
-          title: 'Smart Prioritization',
-          description: 'AI analyzes your tasks and suggests optimal priorities',
+          title: tr('Smart Prioritization'),
+          description: tr(
+              'AI analyzes your tasks and provides personalized recommendations.'),
           color: const Color(0xFF8B5CF6),
           isDark: isDark,
         ),
         const SizedBox(height: 12),
         _FeatureCard(
           icon: Icons.auto_graph,
-          title: 'Productivity Insights',
-          description: 'Get personalized recommendations based on your patterns',
+          title: tr('Productivity Insights'),
+          description:
+              tr('Get personalized recommendations based on your patterns.'),
           color: const Color(0xFF10B981),
           isDark: isDark,
         ),
         const SizedBox(height: 12),
         _FeatureCard(
           icon: Icons.task_alt,
-          title: 'Task Breakdown',
-          description: 'Break complex tasks into manageable steps',
+          title: tr('Task Breakdown'),
+          description: tr('Break complex tasks into actionable steps.'),
           color: const Color(0xFF60A5FA),
           isDark: isDark,
         ),
@@ -281,7 +285,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       final insights = await _aiService.generateProductivityInsights(tasks);
       setState(() => _response = insights);
     } catch (e) {
-      _showError('Failed to generate insights');
+      _showError(tr('Failed to generate insights'));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -300,7 +304,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       final schedule = await _aiService.suggestOptimalSchedule(pending);
       setState(() => _response = schedule);
     } catch (e) {
-      _showError('Failed to generate schedule');
+      _showError(tr('Failed to generate schedule'));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -320,7 +324,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       setState(() => _response = breakdown);
       _inputController.clear();
     } catch (e) {
-      _showError('Failed to break down task');
+      _showError(tr('Failed to break down task'));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -372,7 +376,10 @@ class _ModeChip extends StatelessWidget {
                 size: 18,
                 color: selected
                     ? Colors.white
-                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
               ),
               const SizedBox(width: 6),
               Text(
@@ -381,7 +388,10 @@ class _ModeChip extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: selected
                       ? Colors.white
-                      : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
                 ),
               ),
             ],

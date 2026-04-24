@@ -47,8 +47,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final surfaceColor = isDark ? const Color(0xFF111827) : Colors.white;
     final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.65);
-    final previewPath =
-        _removeAvatar ? null : (_avatarSourcePath ?? widget.profile.localAvatarPath);
+    final previewPath = _removeAvatar
+        ? null
+        : (_avatarSourcePath ?? widget.profile.localAvatarPath);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -238,7 +239,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final message = error.code == 'requires-recent-login'
           ? 'Please sign in again before changing your email.'
           : (error.message ?? 'Unable to save profile.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       if (!mounted) {
         return;
@@ -253,4 +255,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 }
-

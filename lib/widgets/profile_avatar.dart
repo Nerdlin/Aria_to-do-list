@@ -32,7 +32,8 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalizedName = displayName.trim();
-    final initial = normalizedName.isEmpty ? 'A' : normalizedName[0].toUpperCase();
+    final initial =
+        normalizedName.isEmpty ? 'A' : normalizedName[0].toUpperCase();
     final gradient = _gradients[avatarSeed % _gradients.length];
     final file = _resolvedFile(imagePath);
 

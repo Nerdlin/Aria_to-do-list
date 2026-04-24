@@ -34,11 +34,31 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   final List<Map<String, dynamic>> _categories = const [
     {'icon': Icons.work_rounded, 'label': 'Work', 'color': Color(0xFF7C3AED)},
-    {'icon': Icons.person_rounded, 'label': 'Personal', 'color': Color(0xFF3B82F6)},
-    {'icon': Icons.favorite_rounded, 'label': 'Health', 'color': Color(0xFF10B981)},
-    {'icon': Icons.school_rounded, 'label': 'Learning', 'color': Color(0xFFF59E0B)},
-    {'icon': Icons.payments_rounded, 'label': 'Finance', 'color': Color(0xFFEF4444)},
-    {'icon': Icons.brush_rounded, 'label': 'Creative', 'color': Color(0xFFEC4899)},
+    {
+      'icon': Icons.person_rounded,
+      'label': 'Personal',
+      'color': Color(0xFF3B82F6)
+    },
+    {
+      'icon': Icons.favorite_rounded,
+      'label': 'Health',
+      'color': Color(0xFF10B981)
+    },
+    {
+      'icon': Icons.school_rounded,
+      'label': 'Learning',
+      'color': Color(0xFFF59E0B)
+    },
+    {
+      'icon': Icons.payments_rounded,
+      'label': 'Finance',
+      'color': Color(0xFFEF4444)
+    },
+    {
+      'icon': Icons.brush_rounded,
+      'label': 'Creative',
+      'color': Color(0xFFEC4899)
+    },
   ];
 
   final List<int> _durationOptions = const [25, 45, 60, 90];
@@ -56,13 +76,21 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void initState() {
     super.initState();
     _suggestions = _buildSuggestions();
+    _titleController.addListener(_handleTitleChanged);
   }
 
   @override
   void dispose() {
+    _titleController.removeListener(_handleTitleChanged);
     _titleController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  void _handleTitleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -112,6 +140,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                 children: [
                   TextField(
                     controller: _titleController,
+                    onChanged: (_) => setState(() {}),
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 2,
                     decoration: InputDecoration(
@@ -163,7 +192,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       (suggestion) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: InkWell(
-                          onTap: () => _titleController.text = suggestion,
+                          onTap: () {
+                            _titleController.text = suggestion;
+                            setState(() {});
+                          },
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
                             width: double.infinity,
@@ -182,7 +214,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    suggestion,
+                                    tr(suggestion),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -216,13 +248,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   final isSelected = _selectedCategory == category['label'];
                   return InkWell(
                     onTap: () {
-                      setState(() => _selectedCategory = category['label'] as String);
+                      setState(() =>
+                          _selectedCategory = category['label'] as String);
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (category['color'] as Color).withValues(alpha: 0.14)
+                            ? (category['color'] as Color)
+                                .withValues(alpha: 0.14)
                             : subduedBackground,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
@@ -247,7 +281,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                               fontWeight: FontWeight.w700,
                               color: isSelected
                                   ? theme.colorScheme.onSurface
-                                  : theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                                  : theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.75),
                             ),
                           ),
                         ],
@@ -362,7 +397,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                             Text(
                               DateFormat('h:mm a').format(_selectedDate),
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.65),
                               ),
                             ),
                           ],
@@ -404,7 +440,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
               ),
               if (trailing != null) trailing,
             ],
@@ -449,7 +486,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   Future<void> _saveTask() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a task title.')),
+        SnackBar(content: Text(tr('Please enter a task title.'))),
       );
       return;
     }
@@ -477,7 +514,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving task: $error')),
+        SnackBar(content: Text("${tr('Error saving task')}: $error")),
       );
     } finally {
       if (mounted) {
@@ -505,11 +542,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
-              SizedBox(width: 8),
-              Text('AI Analysis'),
+              const Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
+              const SizedBox(width: 8),
+              Text(tr('AI Analysis')),
             ],
           ),
           content: SingleChildScrollView(
@@ -521,7 +558,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: Text(tr('Close')),
             ),
           ],
         ),
@@ -529,7 +566,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to analyze task')),
+        SnackBar(content: Text(tr('Failed to analyze task'))),
       );
     } finally {
       if (mounted) {
@@ -544,4 +581,3 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     return shuffled.take(3).toList();
   }
 }
-

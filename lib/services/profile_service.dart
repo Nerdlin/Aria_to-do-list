@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,11 +19,20 @@ class ProfileService {
   Future<UserProfile> ensureProfileForUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     final avatarPath = prefs.getString(_avatarKey(user.uid));
+    final preferredLanguage = _normalizeLanguageCode(
+      prefs.getString('language_code') ??
+          PlatformDispatcher.instance.locale.languageCode,
+    );
     final snapshot = await _userDoc(user.uid).get();
 
     if (!snapshot.exists) {
-      final profile = UserProfile.fallback(user, localAvatarPath: avatarPath);
-      await _userDoc(user.uid).set(profile.toDocument(), SetOptions(merge: true));
+      final profile = UserProfile.fallback(
+        user,
+        localAvatarPath: avatarPath,
+        languageCode: preferredLanguage,
+      );
+      await _userDoc(user.uid)
+          .set(profile.toDocument(), SetOptions(merge: true));
       return profile;
     }
 
@@ -73,7 +83,8 @@ class ProfileService {
     bool removeAvatar = false,
   }) async {
     final user = _requireUser();
-    final normalizedName = displayName.trim().isEmpty ? 'Aria User' : displayName.trim();
+    final normalizedName =
+        displayName.trim().isEmpty ? 'Aria User' : displayName.trim();
     var normalizedEmail = email.trim();
 
     if (normalizedEmail.isEmpty) {
@@ -174,7 +185,8 @@ class ProfileService {
     final prefs = await SharedPreferences.getInstance();
     final directory = await getApplicationDocumentsDirectory();
     final extension = _extensionForPath(sourcePath);
-    final savedPath = '${directory.path}${Platform.pathSeparator}avatar_$uid$extension';
+    final savedPath =
+        '${directory.path}${Platform.pathSeparator}avatar_$uid$extension';
     final sourceFile = File(sourcePath);
     final targetFile = File(savedPath);
 
@@ -199,6 +211,10 @@ class ProfileService {
   }
 
   String _avatarKey(String uid) => 'avatar_path_$uid';
+
+  String _normalizeLanguageCode(String value) {
+    return value.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+  }
 
   String _extensionForPath(String path) {
     final dotIndex = path.lastIndexOf('.');

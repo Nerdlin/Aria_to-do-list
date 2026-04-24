@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../utils/translations.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -11,10 +13,12 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _navigationTimer;
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 2500), () {
+    _navigationTimer = Timer(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       if (FirebaseAuth.instance.currentUser != null) {
         Navigator.pushReplacementNamed(context, '/shell');
@@ -22,6 +26,12 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacementNamed(context, '/onboarding');
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -40,16 +50,17 @@ class _SplashScreenState extends State<SplashScreen> {
             ],
           ),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
+            const CircleAvatar(
               radius: 46,
               backgroundColor: Colors.white24,
-              child: Icon(Icons.auto_awesome_rounded, size: 42, color: Colors.white),
+              child: Icon(Icons.auto_awesome_rounded,
+                  size: 42, color: Colors.white),
             ),
-            SizedBox(height: 20),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'Aria',
               style: TextStyle(
                 color: Colors.white,
@@ -57,13 +68,13 @@ class _SplashScreenState extends State<SplashScreen> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'AI-Powered Productivity',
-              style: TextStyle(color: Colors.white70),
+              tr('AI-Powered Productivity'),
+              style: const TextStyle(color: Colors.white70),
             ),
-            SizedBox(height: 28),
-            SizedBox(
+            const SizedBox(height: 28),
+            const SizedBox(
               width: 26,
               height: 26,
               child: CircularProgressIndicator(

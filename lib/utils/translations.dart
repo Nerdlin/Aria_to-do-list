@@ -1,66 +1,116 @@
 import '../services/app_controller.dart';
 
 String tr(String text, {Map<String, String>? namedArgs}) {
-  final lang = AppController.instance.profile?.languageCode ?? 'en';
-  String result = text;
-  if (lang == 'ru') {
-    result = _ru[text] ?? text;
-  }
-  
+  final lang = AppController.instance.languageCode;
+  var result = lang == 'ru' ? (_ru[text] ?? text) : text;
+
   if (namedArgs != null) {
     namedArgs.forEach((key, value) {
-      result = result.replaceAll('{}', value); // simple replacement
+      result = result.replaceAll('{$key}', value);
+      result = result.replaceAll('{}', value);
     });
   }
+
   return result;
 }
 
 const _ru = {
-  // Navigation
   'Home': 'Главная',
   'Tasks': 'Задачи',
   'AI': 'ИИ',
   'Stats': 'Статистика',
   'Settings': 'Настройки',
-
-  // Add Task Screen
   'New Task': 'Новая задача',
   'Save': 'Сохранить',
   'Task Details': 'Детали задачи',
   'Task title': 'Название задачи',
   'Notes (optional)': 'Заметки (необязательно)',
-  'AI Suggestions': 'AI Рекомендации',
+  'AI Suggestions': 'ИИ-рекомендации',
   'Category': 'Категория',
   'Work': 'Работа',
   'Personal': 'Личное',
   'Health': 'Здоровье',
-  'Clean up task backlog': 'Разобрать старые задачи',
+  'Learning': 'Обучение',
+  'Finance': 'Финансы',
+  'Creative': 'Творчество',
+  'Priority & Focus': 'Приоритет и фокус',
+  'Low': 'Низкий',
+  'Medium': 'Средний',
+  'High': 'Высокий',
+  'Estimated focus time': 'Примерное время фокуса',
+  '{min} min': '{min} мин',
+  'min': 'мин',
+  'Mark as AI recommended': 'Отметить как рекомендацию ИИ',
+  'Helps Home and Analytics highlight this task.':
+      'Помогает главному экрану и аналитике выделять эту задачу.',
+  'Schedule': 'Расписание',
+  'Analyze': 'Анализ',
+  'Create task': 'Создать задачу',
+  'Task added successfully!': 'Задача успешно добавлена.',
+  'Please enter a title': 'Введите название задачи.',
+  'Please enter a task title.': 'Введите название задачи.',
+  'Error saving task': 'Ошибка сохранения задачи',
+  'AI Analysis': 'ИИ-анализ',
+  'Close': 'Закрыть',
+  'Failed to analyze task': 'Не удалось проанализировать задачу.',
+  'Clean up task backlog': 'Разобрать накопившиеся задачи',
+  'Review project roadmap': 'Проверить дорожную карту проекта',
+  'Prepare client presentation': 'Подготовить презентацию для клиента',
+  'Plan tomorrow focus block': 'Запланировать фокус-блок на завтра',
+  'Reply to priority emails': 'Ответить на важные письма',
+  'Book workout session': 'Записаться на тренировку',
+  'Update monthly budget': 'Обновить месячный бюджет',
   'Read 20 pages of your course': 'Прочитать 20 страниц курса',
-  'Refine onboarding checklist': 'Улучшить чеклист онбординга',
-  'Please enter a title': 'Пожалуйста, введите название',
-  
-  // Tasks Screen
+  'Refine onboarding checklist': 'Улучшить чек-лист онбординга',
   'My Tasks': 'Мои задачи',
   'Search tasks...': 'Поиск задач...',
   'All': 'Все',
-  'No tasks today. Add some!': 'На сегодня задач нет. Добавьте новые!',
-  'Try another filter or create a new task from the center button.': 'Попробуйте другой фильтр или создайте новую задачу.',
-  
-  // Home Screen
-  'Good morning,': 'Доброе утро,',
-  'Good afternoon,': 'Добрый день,',
-  'Good evening,': 'Добрый вечер,',
-  'AI Assistant': 'AI Ассистент',
-  'Analyze your tasks to optimize your day': 'Анализ задач для оптимизации дня',
-  'Get Insights': 'Получить инсайты',
-  'Weekly Progress': 'Прогресс за неделю',
-  'Tasks completed': 'Задач выполнено',
-  'Productivity Score': 'Оценка продуктивности',
-  'Excellent': 'Отлично',
+  'Today': 'Сегодня',
+  'High Priority': 'Высокий приоритет',
+  'AI Pick': 'Выбор ИИ',
+  'Completed': 'Завершено',
+  'Smart queue': 'Умная очередь',
+  'Tap a task to mark it done. Delete the ones you no longer need.':
+      'Нажмите на задачу, чтобы отметить выполнение. Удаляйте то, что больше не нужно.',
+  'No tasks match the selected filter.': 'Нет задач под выбранный фильтр.',
+  'No tasks today. Add some!': 'На сегодня задач нет. Добавьте первую.',
+  'Try another filter or create a new task from the center button.':
+      'Попробуйте другой фильтр или создайте новую задачу центральной кнопкой.',
+  'Good morning': 'Доброе утро',
+  'Good afternoon': 'Добрый день',
+  'Good evening': 'Добрый вечер',
+  'AI INSIGHT': 'ИИ-ИНСАЙТ',
   'Today\'s Schedule': 'Расписание на сегодня',
+  'See all': 'Все',
   'See All': 'Все',
-  
-  // Settings Screen
+  'View all': 'Все',
+  'Priority Tasks': 'Приоритетные задачи',
+  'No tasks planned for today': 'На сегодня задач нет',
+  'Use the + button to add your first task and your Home screen will start updating automatically.':
+      'Нажмите +, чтобы добавить первую задачу. Главный экран начнет обновляться автоматически.',
+  'You have no pending tasks right now. Add a new one to keep your momentum.':
+      'Сейчас нет активных задач. Добавьте новую, чтобы сохранить темп.',
+  'Turn on AI Auto-Planning in Settings to get live suggestions for your day.':
+      'Включите автопланирование ИИ в настройках, чтобы получать живые подсказки на день.',
+  'You are all caught up. Add a new task to keep the momentum going.':
+      'Все задачи закрыты. Добавьте новую, чтобы сохранить темп.',
+  'Start with "{title}". It is your highest impact task and is scheduled for {time}.':
+      'Начните с "{title}". Это самая важная задача, запланированная на {time}.',
+  'You still have {count} task(s) planned for today.':
+      'На сегодня запланировано задач: {count}.',
+  'Highest priority: {title}.': 'Самый высокий приоритет: {title}.',
+  'Nice work, you already completed {count} today.':
+      'Отлично: сегодня уже выполнено {count}.',
+  'No alerts right now. Your inbox is clear.':
+      'Сейчас уведомлений нет. Все спокойно.',
+  'Notifications': 'Уведомления',
+  'Tasks Done': 'Выполнено задач',
+  'Focus Time': 'Время фокуса',
+  'Streak': 'Серия',
+  'h': 'ч',
+  'd': 'д',
+  'WEEKLY SCORE': 'ОЦЕНКА НЕДЕЛИ',
+  '{sign}{change}% vs last week': '{sign}{change}% к прошлой неделе',
   'Profile': 'Профиль',
   'Edit Profile': 'Редактировать профиль',
   'Preferences': 'Настройки',
@@ -72,58 +122,30 @@ const _ru = {
   'English': 'Английский',
   'Russian': 'Русский',
   'Sign Out': 'Выйти',
-  'Features': 'Функции',
-  'AI Auto-Planning': 'AI Авто-планирование',
+  'AI Auto-Planning': 'Автопланирование ИИ',
   'Smart Prioritization': 'Умная приоритизация',
   'Smart Reminders': 'Умные напоминания',
-  'Focus Mode': 'Режим фокусировки',
-  'Notifications': 'Уведомления',
+  'Focus Mode': 'Режим фокуса',
   'Push Notifications': 'Push-уведомления',
   'Daily Digest': 'Ежедневная сводка',
   'Weekly Report': 'Еженедельный отчет',
   'Choose theme': 'Выберите тему',
   'Choose language': 'Выберите язык',
   'Current UI language': 'Текущий язык интерфейса',
-
-  // Misc / Other
-  'Get smart insights and recommendations': 'Умные инсайты и рекомендации',
-  'Insights': 'Инсайты',
-  'Schedule': 'Расписание',
-  'Breakdown': 'Структура',
-  'Quick Actions': 'Быстрые действия',
-  'Analyze My Productivity': 'Проанализировать мою продуктивность',
-  'Suggest Optimal Schedule': 'Предложить оптимальное расписание',
-
-  // Extras
-  'Analyze': 'Анализ',
-  'Low': 'Низкий',
-  'Medium': 'Средний',
-  'High': 'Высокий',
-  'min': 'мин',
-  'Estimated focus time': 'Примерное время фокуса',
-  'Mark as AI recommended': 'Отметить как рекомендовано ИИ',
-  'Helps Home and Analytics highlight this task.': 'Помогает выделить задачу на главной',
-  'Task added successfully!': 'Задача успешно добавлена!',
-  'Today': 'Сегодня',
-  'High Priority': 'Высокий приоритет',
-  'AI Pick': 'Выбор ИИ',
-  'Completed': 'Завершено',
-  'Smart queue': 'Умная очередь',
-  'Tap a task to mark it done. Delete the ones you no longer need.': 'Нажмите на задачу для выполнения. Удалите те, что больше не нужны.',
-  'No tasks match the selected filter.': 'Нет задач, подходящих под фильтр.',
-
-  // Settings
   'APPEARANCE': 'ВНЕШНИЙ ВИД',
   'ACCOUNT': 'АККАУНТ',
   'AI FEATURES': 'ФУНКЦИИ ИИ',
   'NOTIFICATIONS': 'УВЕДОМЛЕНИЯ',
-  'Let Aria suggest your next move': 'Пусть Aria предложит ваш следующий шаг',
-  'Rank tasks by impact and urgency': 'Ранжируйте задачи по важности и срочности',
-  'Keep nudges useful instead of noisy': 'Делаем напоминания полезными, а не шумными',
-  'Protect deep work sessions': 'Защитите сессии глубокой работы',
-  'AI Focus Mode': 'AI Режим фокуса',
-  'Task reminders and quick updates': 'Напоминания о задачах и быстрые обновления',
-  'Morning summary of your day': 'Утренняя сводка вашего дня',
+  'Let Aria suggest your next move': 'Позвольте Aria предлагать следующий шаг',
+  'Rank tasks by impact and urgency':
+      'Сортируйте задачи по важности и срочности',
+  'Keep nudges useful instead of noisy':
+      'Сохраняйте напоминания полезными, а не шумными',
+  'Protect deep work sessions': 'Защищайте сессии глубокой работы',
+  'AI Focus Mode': 'ИИ-режим фокуса',
+  'Task reminders and quick updates':
+      'Напоминания о задачах и быстрые обновления',
+  'Morning summary of your day': 'Утренняя сводка дня',
   'Progress snapshot every week': 'Еженедельный срез прогресса',
   'Profile & Account': 'Профиль и аккаунт',
   'Update your name, photo, and email': 'Обновите имя, фото и email',
@@ -136,18 +158,97 @@ const _ru = {
   'unknown email': 'неизвестный email',
   'Send password reset email': 'Отправить письмо для сброса пароля',
   'Password reset email sent to {}': 'Письмо для сброса отправлено на {}',
-  'Your personal data and task collection are scoped to your account in Firestore.': 'Ваши личные данные и задачи привязаны только к вашему аккаунту в Firestore.',
-  'Aria Pro is currently represented as an in-app profile tier. Billing is not wired to a payment provider in this project yet, but the settings page now opens plan details instead of doing nothing.': 'Aria Pro пока что представляет собой локальный статус аккаунта. Биллинг еще не подключен.',
+  'Your personal data and task collection are scoped to your account in Firestore.':
+      'Ваши личные данные и задачи привязаны только к вашему аккаунту в Firestore.',
+  'Aria Pro is currently represented as an in-app profile tier. Billing is not wired to a payment provider in this project yet, but the settings page now opens plan details instead of doing nothing.':
+      'Aria Pro пока является статусом профиля внутри приложения. Платежный провайдер еще не подключен.',
   'FAQ': 'Частые вопросы',
-  'Tap profile photo to edit your account. Tap tasks to complete them.': 'Нажмите на фото, чтобы изменить профиль. Нажмите на задачу, чтобы выполнить её.',
+  'Tap profile photo to edit your account. Tap tasks to complete them.':
+      'Нажмите фото профиля, чтобы изменить аккаунт. Нажмите задачу, чтобы завершить ее.',
   'Support email': 'Почта поддержки',
   'Copy': 'Копировать',
   'Support email copied.': 'Почта поддержки скопирована.',
   'Feedback': 'Отзывы',
-  'Use your task notes or profile editor to capture feedback for now.': 'Пока можете использовать заметки задач для записи отзывов.',
+  'Use your task notes or profile editor to capture feedback for now.':
+      'Пока используйте заметки задач или редактор профиля для записи отзывов.',
   '{} Plan': 'План {}',
   '{}-day streak': '{} дней подряд',
   'Aria User': 'Пользователь Aria',
-  'No email available': 'Нет email',
-  '{} plan details': 'детали плана {}',
+  'No email available': 'Email недоступен',
+  '{} plan details': 'Детали плана {}',
+  'Add task': 'Добавить задачу',
+  'Add another task': 'Добавить еще задачу',
+  'Everything is complete': 'Все выполнено',
+  'Focus mode enabled.': 'Режим фокуса включен.',
+  'Focus mode turned off.': 'Режим фокуса выключен.',
+  'AI Assistant': 'ИИ-ассистент',
+  'Get smart insights and recommendations':
+      'Получайте умные инсайты и рекомендации',
+  'Insights': 'Инсайты',
+  'Breakdown': 'Разбиение',
+  'Quick Actions': 'Быстрые действия',
+  'Analyze My Productivity': 'Проанализировать продуктивность',
+  'Suggest Optimal Schedule': 'Предложить оптимальное расписание',
+  'Break Down Task': 'Разбить задачу',
+  'Task Breakdown': 'Разбиение задачи',
+  'Productivity Insights': 'Инсайты продуктивности',
+  'AI Recommendation': 'Рекомендация ИИ',
+  'Ask Aria': 'Спросить Aria',
+  'Enter task title...': 'Введите название задачи...',
+  'What would you like help with?': 'С чем помочь?',
+  'Get AI Help': 'Получить помощь ИИ',
+  'AI analyzes your tasks and provides personalized recommendations.':
+      'ИИ анализирует задачи и дает персональные рекомендации.',
+  'Get personalized recommendations based on your patterns.':
+      'Получайте персональные рекомендации на основе ваших привычек.',
+  'Get personalized schedule recommendations based on priority and duration.':
+      'Получите расписание с учетом приоритета и длительности.',
+  'Break complex tasks into actionable steps.':
+      'Разбейте сложные задачи на понятные шаги.',
+  'Failed to generate insights': 'Не удалось создать инсайты.',
+  'Failed to generate schedule': 'Не удалось создать расписание.',
+  'Failed to break down task': 'Не удалось разбить задачу.',
+  'Welcome back': 'С возвращением',
+  'Sign in to continue with your tasks, analytics, and profile.':
+      'Войдите, чтобы продолжить работу с задачами, аналитикой и профилем.',
+  'Email': 'Email',
+  'Password': 'Пароль',
+  'Sign In': 'Войти',
+  'Create a new account': 'Создать новый аккаунт',
+  'Create account': 'Создать аккаунт',
+  'Set up your profile once and keep tasks, analytics, and settings in sync.':
+      'Настройте профиль один раз, а задачи, аналитика и настройки будут синхронизироваться.',
+  'Name': 'Имя',
+  'Create Account': 'Создать аккаунт',
+  'Unable to sign in.': 'Не удалось войти.',
+  'Unable to create account.': 'Не удалось создать аккаунт.',
+  'AI-Powered Productivity': 'Продуктивность с ИИ',
+  'Skip': 'Пропустить',
+  'Smart Daily Planning': 'Умное планирование дня',
+  'Priority Intelligence': 'Умные приоритеты',
+  'Time Optimization': 'Оптимизация времени',
+  'AI PREVIEW': 'ПРЕДПРОСМОТР ИИ',
+  'Aria analyzes your goals, energy levels, and calendar to craft a perfectly optimized daily plan - automatically.':
+      'Aria анализирует цели, энергию и календарь, чтобы автоматически собрать оптимальный план дня.',
+  'AI continuously ranks your tasks by impact and deadline so you always focus on what moves the needle most.':
+      'ИИ постоянно сортирует задачи по влиянию и срокам, чтобы вы фокусировались на самом важном.',
+  'Aria learns your peak performance patterns and schedules deep work when your brain is firing on all cylinders.':
+      'Aria запоминает ваши пики продуктивности и ставит глубокую работу на самое сильное время.',
+  '9:00 AM - Deep Work': '09:00 - Глубокая работа',
+  '11:30 AM - Emails': '11:30 - Почта',
+  '2:00 PM - Meetings': '14:00 - Встречи',
+  '4:30 PM - Review': '16:30 - Обзор',
+  'High Impact - Q4 Strategy': 'Высокое влияние - стратегия Q4',
+  'Medium - Team Sync': 'Средний - синхронизация команды',
+  'Low - Archive emails': 'Низкий - разобрать почту',
+  'Peak Focus: 9-11 AM': 'Пик фокуса: 09:00-11:00',
+  'Creative: 2-4 PM': 'Креатив: 14:00-16:00',
+  'Admin: 4-6 PM': 'Админ: 16:00-18:00',
+  '87% Efficiency Score': 'Оценка эффективности 87%',
+  'AI Optimized': 'Оптимизировано ИИ',
+  'Auto-Schedule': 'Авторасписание',
+  'Smart Ranking': 'Умная сортировка',
+  'Auto-Priority': 'Автоприоритет',
+  'Pattern Learning': 'Обучение паттернам',
+  'Peak Hours': 'Пиковые часы',
 };

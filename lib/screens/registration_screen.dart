@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../utils/translations.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -67,7 +68,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.circular(26),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                          color:
+                              const Color(0xFF10B981).withValues(alpha: 0.25),
                           blurRadius: 24,
                           offset: const Offset(0, 12),
                         ),
@@ -80,7 +82,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
                   Text(
-                    'Create account',
+                    tr('Create account'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
@@ -90,7 +92,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Set up your profile once and keep tasks, analytics, and settings in sync.',
+                    tr('Set up your profile once and keep tasks, analytics, and settings in sync.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -119,27 +121,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         TextField(
                           controller: _nameController,
                           textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            prefixIcon: Icon(Icons.person_outline),
+                          decoration: InputDecoration(
+                            labelText: tr('Name'),
+                            prefixIcon: const Icon(Icons.person_outline),
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.email_outlined),
+                          decoration: InputDecoration(
+                            labelText: tr('Email'),
+                            prefixIcon: const Icon(Icons.email_outlined),
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline_rounded),
+                          decoration: InputDecoration(
+                            labelText: tr('Password'),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -160,9 +162,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       strokeWidth: 2.6,
                                     ),
                                   )
-                                : const Text(
-                                    'Create Account',
-                                    style: TextStyle(
+                                : Text(
+                                    tr('Create Account'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -202,7 +204,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message ?? 'Unable to create account.')),
+        SnackBar(
+            content: Text(error.message ?? tr('Unable to create account.'))),
       );
     } finally {
       if (mounted) {
@@ -211,4 +214,3 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 }
-

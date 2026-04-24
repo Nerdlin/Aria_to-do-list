@@ -27,24 +27,30 @@ class HomeScreen extends StatelessWidget {
           builder: (context, snapshot) {
             final tasks = snapshot.data ?? const <TaskItem>[];
             final todayTasks = tasks
-                .where((task) => TaskMetrics.isSameDay(task.date, DateTime.now()))
+                .where(
+                    (task) => TaskMetrics.isSameDay(task.date, DateTime.now()))
                 .toList()
               ..sort((first, second) => first.date.compareTo(second.date));
-            final pendingTasks = tasks.where((task) => !task.isCompleted).toList()
+            final pendingTasks = tasks
+                .where((task) => !task.isCompleted)
+                .toList()
               ..sort(_prioritySort);
             final priorityTasks = pendingTasks.take(3).toList();
-            final completedToday = todayTasks.where((task) => task.isCompleted).length;
+            final completedToday =
+                todayTasks.where((task) => task.isCompleted).length;
             final focusMinutesToday = TaskMetrics.focusMinutes(
               todayTasks,
               completedOnly: true,
             );
             final streak = TaskMetrics.calculateStreak(tasks);
-            final weekTasks = TaskMetrics.tasksForRange(tasks, AnalyticsRange.week);
+            final weekTasks =
+                TaskMetrics.tasksForRange(tasks, AnalyticsRange.week);
             final previousWeekTasks = TaskMetrics.previousRangeTasks(
               tasks,
               AnalyticsRange.week,
             );
-            final weeklyScore = TaskMetrics.productivityScore(weekTasks).round();
+            final weeklyScore =
+                TaskMetrics.productivityScore(weekTasks).round();
             final previousWeeklyScore =
                 TaskMetrics.productivityScore(previousWeekTasks).round();
             final weeklyBuckets = TaskMetrics.buildBuckets(
@@ -52,8 +58,11 @@ class HomeScreen extends StatelessWidget {
               AnalyticsRange.week,
             );
             final insight = (profile?.aiAutoPlanning ?? true)
-                ? TaskMetrics.buildInsight(todayTasks.isNotEmpty ? todayTasks : pendingTasks)
-                : tr('Turn on AI Auto-Planning in Settings to get live suggestions for your day.');
+                ? _buildHomeInsight(
+                    todayTasks.isNotEmpty ? todayTasks : pendingTasks,
+                  )
+                : tr(
+                    'Turn on AI Auto-Planning in Settings to get live suggestions for your day.');
 
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -71,7 +80,8 @@ class HomeScreen extends StatelessWidget {
                             todayTasks: todayTasks,
                             pendingTasks: pendingTasks,
                           ),
-                          onProfileTap: () => _openProfileEditor(context, profile),
+                          onProfileTap: () =>
+                              _openProfileEditor(context, profile),
                         ),
                         Positioned(
                           left: 20,
@@ -100,15 +110,18 @@ class HomeScreen extends StatelessWidget {
                       child: todayTasks.isEmpty
                           ? _EmptyCard(
                               title: tr('No tasks planned for today'),
-                              subtitle: tr('Use the + button to add your first task and your Home screen will start updating automatically.'),
+                              subtitle: tr(
+                                  'Use the + button to add your first task and your Home screen will start updating automatically.'),
                               actionLabel: tr('Create task'),
-                              onTap: () => Navigator.pushNamed(context, '/add-task'),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/add-task'),
                             )
                           : Column(
                               children: todayTasks
                                   .map(
                                     (task) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
                                       child: _ScheduleCard(
                                         task: task,
                                         onTap: () => taskService.toggleTask(
@@ -135,9 +148,11 @@ class HomeScreen extends StatelessWidget {
                       child: priorityTasks.isEmpty
                           ? _EmptyCard(
                               title: tr('Everything is complete'),
-                              subtitle: tr('You have no pending tasks right now. Add a new one to keep your momentum.'),
+                              subtitle: tr(
+                                  'You have no pending tasks right now. Add a new one to keep your momentum.'),
                               actionLabel: tr('Add task'),
-                              onTap: () => Navigator.pushNamed(context, '/add-task'),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/add-task'),
                             )
                           : Column(
                               children: [
@@ -154,19 +169,24 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                 ),
                                 InkWell(
-                                  onTap: () => Navigator.pushNamed(context, '/add-task'),
+                                  onTap: () =>
+                                      Navigator.pushNamed(context, '/add-task'),
                                   borderRadius: BorderRadius.circular(18),
                                   child: Container(
                                     width: double.infinity,
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+                                        colors: [
+                                          Color(0xFFF5F3FF),
+                                          Color(0xFFEDE9FE)
+                                        ],
                                       ),
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         const Icon(
                                           Icons.auto_awesome_rounded,
@@ -202,7 +222,8 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: _FocusModeCard(
                         enabled: profile?.focusMode ?? false,
-                        nextTask: priorityTasks.isEmpty ? null : priorityTasks.first,
+                        nextTask:
+                            priorityTasks.isEmpty ? null : priorityTasks.first,
                         onTap: () async {
                           final nextValue = !(profile?.focusMode ?? false);
                           await AppController.instance.updatePreferences(
@@ -265,14 +286,20 @@ class HomeScreen extends StatelessWidget {
     required List<TaskItem> todayTasks,
     required List<TaskItem> pendingTasks,
   }) {
-    final upcomingToday = todayTasks.where((task) => !task.isCompleted).toList();
+    final upcomingToday =
+        todayTasks.where((task) => !task.isCompleted).toList();
     final notifications = <String>[
       if (upcomingToday.isNotEmpty)
-        tr('You still have {count} task(s) planned for today.', namedArgs: {'count': upcomingToday.length.toString()}),
+        tr('You still have {count} task(s) planned for today.',
+            namedArgs: {'count': upcomingToday.length.toString()}),
       if (pendingTasks.isNotEmpty)
-        tr('Highest priority: {title}.', namedArgs: {'title': pendingTasks.first.title}),
+        tr('Highest priority: {title}.',
+            namedArgs: {'title': pendingTasks.first.title}),
       if (todayTasks.where((task) => task.isCompleted).isNotEmpty)
-        tr('Nice work, you already completed {count} today.', namedArgs: {'count': todayTasks.where((task) => task.isCompleted).length.toString()}),
+        tr('Nice work, you already completed {count} today.', namedArgs: {
+          'count':
+              todayTasks.where((task) => task.isCompleted).length.toString()
+        }),
     ];
 
     showModalBottomSheet<void>(
@@ -294,7 +321,8 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 tr('Notifications'),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               ...items.map(
@@ -328,6 +356,33 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
+
+String _buildHomeInsight(List<TaskItem> tasks) {
+  final pending = tasks.where((task) => !task.isCompleted).toList();
+  pending.sort((first, second) {
+    final weightCompare = TaskMetrics.priorityWeight(
+      second.priority,
+    ).compareTo(TaskMetrics.priorityWeight(first.priority));
+    if (weightCompare != 0) {
+      return weightCompare;
+    }
+    return first.date.compareTo(second.date);
+  });
+
+  if (pending.isEmpty) {
+    return tr(
+        'You are all caught up. Add a new task to keep the momentum going.');
+  }
+
+  final nextTask = pending.first;
+  return tr(
+    'Start with "{title}". It is your highest impact task and is scheduled for {time}.',
+    namedArgs: {
+      'title': nextTask.title,
+      'time': DateFormat('HH:mm').format(nextTask.date),
+    },
+  );
 }
 
 class _HomeHeader extends StatelessWidget {
@@ -364,39 +419,49 @@ class _HomeHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _greeting(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _greeting(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white70,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   InkWell(
                     onTap: onNotificationsTap,
@@ -407,7 +472,8 @@ class _HomeHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.16),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.24)),
                       ),
                       child: const Icon(
                         Icons.notifications_none_rounded,
@@ -690,14 +756,15 @@ class _ScheduleCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 
-                        task.isCompleted ? 0.46 : 1,
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: task.isCompleted ? 0.46 : 1,
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    tr('{min} min', namedArgs: {'min': task.durationMinutes.toString()}),
+                    tr('{min} min',
+                        namedArgs: {'min': task.durationMinutes.toString()}),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
@@ -726,8 +793,8 @@ class _ScheduleCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 
-                        task.isCompleted ? 0.46 : 1,
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: task.isCompleted ? 0.46 : 1,
                       ),
                       decoration:
                           task.isCompleted ? TextDecoration.lineThrough : null,
@@ -757,7 +824,9 @@ class _ScheduleCard extends StatelessWidget {
                     : Border.all(color: theme.dividerColor),
               ),
               child: Icon(
-                task.isCompleted ? Icons.check_rounded : Icons.play_arrow_rounded,
+                task.isCompleted
+                    ? Icons.check_rounded
+                    : Icons.play_arrow_rounded,
                 color: accentColor,
               ),
             ),
@@ -836,10 +905,11 @@ class _PriorityTaskCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 
-                    task.isCompleted ? 0.45 : 1,
+                  color: theme.colorScheme.onSurface.withValues(
+                    alpha: task.isCompleted ? 0.45 : 1,
                   ),
-                  decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                  decoration:
+                      task.isCompleted ? TextDecoration.lineThrough : null,
                 ),
               ),
             ),
@@ -920,13 +990,17 @@ class _WeeklyProgressCard extends StatelessWidget {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  tr('{sign}{change}% vs last week', namedArgs: {'sign': change >= 0 ? '+' : '', 'change': change.abs().toString()}),
+                  tr('{sign}{change}% vs last week', namedArgs: {
+                    'sign': change >= 0 ? '+' : '',
+                    'change': change.abs().toString()
+                  }),
                   style: const TextStyle(
                     color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.w700,
@@ -976,8 +1050,9 @@ class _WeeklyProgressCard extends StatelessWidget {
                             bucket.label,
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight:
-                                  bucket.isCurrent ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: bucket.isCurrent
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: bucket.isCurrent
                                   ? const Color(0xFFC4B5FD)
                                   : Colors.white.withValues(alpha: 0.42),
@@ -1125,4 +1200,3 @@ class _EmptyCard extends StatelessWidget {
     );
   }
 }
-

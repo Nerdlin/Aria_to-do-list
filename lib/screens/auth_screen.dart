@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../utils/translations.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -63,7 +64,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       borderRadius: BorderRadius.circular(26),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7C3AED).withValues(alpha: 0.28),
+                          color:
+                              const Color(0xFF7C3AED).withValues(alpha: 0.28),
                           blurRadius: 24,
                           offset: const Offset(0, 12),
                         ),
@@ -76,7 +78,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                   Text(
-                    'Welcome back',
+                    tr('Welcome back'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
@@ -86,7 +88,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in to continue with your tasks, analytics, and profile.',
+                    tr('Sign in to continue with your tasks, analytics, and profile.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -124,9 +126,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         TextField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline_rounded),
+                          decoration: InputDecoration(
+                            labelText: tr('Password'),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -144,9 +146,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                       strokeWidth: 2.6,
                                     ),
                                   )
-                                : const Text(
-                                    'Sign In',
-                                    style: TextStyle(
+                                : Text(
+                                    tr('Sign In'),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -159,9 +161,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/register'),
-                    child: const Text(
-                      'Create a new account',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: Text(
+                      tr('Create a new account'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -193,7 +195,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message ?? 'Unable to sign in.')),
+        SnackBar(content: Text(error.message ?? tr('Unable to sign in.'))),
       );
     } finally {
       if (mounted) {
@@ -202,4 +204,3 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 }
-

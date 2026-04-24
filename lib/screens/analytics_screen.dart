@@ -53,7 +53,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           stream: _taskService.getTasksStream(),
           builder: (context, snapshot) {
             final allTasks = snapshot.data ?? const <TaskItem>[];
-            final rangeTasks = TaskMetrics.tasksForRange(allTasks, _selectedRange);
+            final rangeTasks =
+                TaskMetrics.tasksForRange(allTasks, _selectedRange);
             final previousRangeTasks = TaskMetrics.previousRangeTasks(
               allTasks,
               _selectedRange,
@@ -64,7 +65,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             final completed = TaskMetrics.completedCount(rangeTasks);
             final focusHours = TaskMetrics.focusMinutes(rangeTasks) / 60;
             final streak = TaskMetrics.calculateStreak(allTasks);
-            final buckets = TaskMetrics.buildBuckets(rangeTasks, _selectedRange);
+            final buckets =
+                TaskMetrics.buildBuckets(rangeTasks, _selectedRange);
             final categories = TaskMetrics.categoryCounts(rangeTasks);
             final achievements = _buildAchievements(
               rangeTasks: rangeTasks,
@@ -95,7 +97,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                             Text(
                               TaskMetrics.rangeLabel(_selectedRange),
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.64),
                               ),
                             ),
                           ],
@@ -114,7 +117,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                             ),
                             _RangeChip(
                               label: '3M',
-                              selected: _selectedRange == AnalyticsRange.quarter,
+                              selected:
+                                  _selectedRange == AnalyticsRange.quarter,
                               onTap: () => _setRange(AnalyticsRange.quarter),
                             ),
                           ],
@@ -162,14 +166,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF111827) : Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF111827)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(22),
                               border: Border.all(color: theme.dividerColor),
                             ),
                             child: Text(
                               'Analytics will fill up automatically as you add and complete tasks in this period.',
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.72),
                                 height: 1.5,
                               ),
                             ),
@@ -275,7 +282,10 @@ class _RangeChip extends StatelessWidget {
               fontWeight: FontWeight.w800,
               color: selected
                   ? Colors.white
-                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -356,7 +366,8 @@ class _ScoreCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -466,13 +477,17 @@ class _StatsGrid extends StatelessWidget {
               const Spacer(),
               Text(
                 stat.value,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 3),
               Text(
                 stat.label,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.64),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.64),
                 ),
               ),
               const SizedBox(height: 4),
@@ -524,12 +539,16 @@ class _TrendCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -582,8 +601,9 @@ class _TrendCard extends StatelessWidget {
                             Text(
                               bucket.label,
                               style: TextStyle(
-                                fontWeight:
-                                    bucket.isCurrent ? FontWeight.w700 : FontWeight.w500,
+                                fontWeight: bucket.isCurrent
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                                 color: bucket.isCurrent
                                     ? const Color(0xFF8B5CF6)
                                     : Theme.of(context)
@@ -642,7 +662,8 @@ class _CategoryBreakdownCard extends StatelessWidget {
           const SizedBox(height: 16),
           ...items.map((entry) {
             final color = _categoryColor(entry.key);
-            final percentage = total == 0 ? 0 : ((entry.value / total) * 100).round();
+            final percentage =
+                total == 0 ? 0 : ((entry.value / total) * 100).round();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
@@ -859,4 +880,3 @@ class _ScoreRingPainter extends CustomPainter {
     return oldDelegate.progress != progress;
   }
 }
-

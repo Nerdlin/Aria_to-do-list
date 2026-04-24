@@ -39,8 +39,7 @@ class TaskItem {
       durationMinutes: data['durationMinutes'] as int? ?? 60,
       isCompleted: data['isCompleted'] as bool? ?? false,
       isAiPick: data['isAiPick'] as bool? ?? false,
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ??
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ??
           (data['date'] as Timestamp?)?.toDate() ??
           DateTime.now(),
       completedAt: (data['completedAt'] as Timestamp?)?.toDate(),
@@ -58,7 +57,8 @@ class TaskItem {
       'isCompleted': isCompleted,
       'isAiPick': isAiPick,
       'createdAt': Timestamp.fromDate(createdAt),
-      'completedAt': completedAt == null ? null : Timestamp.fromDate(completedAt!),
+      'completedAt':
+          completedAt == null ? null : Timestamp.fromDate(completedAt!),
       'note': note,
       'userId': FirebaseAuth.instance.currentUser?.uid,
     };

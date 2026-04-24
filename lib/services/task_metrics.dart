@@ -59,7 +59,8 @@ class TaskMetrics {
 
     var streak = 0;
     var expectedDate = DateTime.now();
-    expectedDate = DateTime(expectedDate.year, expectedDate.month, expectedDate.day);
+    expectedDate =
+        DateTime(expectedDate.year, expectedDate.month, expectedDate.day);
 
     final hasToday = completedDays.any((date) => isSameDay(date, expectedDate));
     final hasYesterday = completedDays.any(
@@ -112,9 +113,8 @@ class TaskMetrics {
   }
 
   static int focusMinutes(List<TaskItem> tasks, {bool completedOnly = true}) {
-    final scopedTasks = completedOnly
-        ? tasks.where((task) => task.isCompleted)
-        : tasks;
+    final scopedTasks =
+        completedOnly ? tasks.where((task) => task.isCompleted) : tasks;
     return scopedTasks.fold<int>(
       0,
       (sum, task) => sum + task.durationMinutes,
@@ -129,7 +129,8 @@ class TaskMetrics {
     return counts;
   }
 
-  static List<TaskItem> tasksForRange(List<TaskItem> tasks, AnalyticsRange range) {
+  static List<TaskItem> tasksForRange(
+      List<TaskItem> tasks, AnalyticsRange range) {
     final now = DateTime.now();
     late final DateTime start;
 
@@ -194,7 +195,8 @@ class TaskMetrics {
             .subtract(Duration(days: now.weekday - 1));
         return List<AnalyticsBucket>.generate(7, (index) {
           final day = monday.add(Duration(days: index));
-          final dayTasks = tasks.where((task) => isSameDay(task.date, day)).toList();
+          final dayTasks =
+              tasks.where((task) => isSameDay(task.date, day)).toList();
           return AnalyticsBucket(
             label: DateFormat('E').format(day).substring(0, 1),
             completed: completedCount(dayTasks),
@@ -254,8 +256,8 @@ class TaskMetrics {
   static String buildInsight(List<TaskItem> tasks) {
     final pending = tasks.where((task) => !task.isCompleted).toList();
     pending.sort((first, second) {
-      final weightCompare =
-          priorityWeight(second.priority).compareTo(priorityWeight(first.priority));
+      final weightCompare = priorityWeight(second.priority)
+          .compareTo(priorityWeight(first.priority));
       if (weightCompare != 0) {
         return weightCompare;
       }

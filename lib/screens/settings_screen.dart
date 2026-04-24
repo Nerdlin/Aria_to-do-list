@@ -71,7 +71,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _SettingRow(
                                   icon: Icons.auto_awesome_rounded,
                                   label: tr('AI Auto-Planning'),
-                                  subtitle: tr('Let Aria suggest your next move'),
+                                  subtitle:
+                                      tr('Let Aria suggest your next move'),
                                   color: const Color(0xFF8B5CF6),
                                   value: profile?.aiAutoPlanning ?? true,
                                   onChanged: (value) => AppController.instance
@@ -80,16 +81,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _SettingRow(
                                   icon: Icons.psychology_rounded,
                                   label: tr('Smart Prioritization'),
-                                  subtitle: tr('Rank tasks by impact and urgency'),
+                                  subtitle:
+                                      tr('Rank tasks by impact and urgency'),
                                   color: const Color(0xFF6366F1),
                                   value: profile?.smartPrioritization ?? true,
                                   onChanged: (value) => AppController.instance
-                                      .updatePreferences(smartPrioritization: value),
+                                      .updatePreferences(
+                                          smartPrioritization: value),
                                 ),
                                 _SettingRow(
                                   icon: Icons.access_time_rounded,
                                   label: tr('Smart Reminders'),
-                                  subtitle: tr('Keep nudges useful instead of noisy'),
+                                  subtitle:
+                                      tr('Keep nudges useful instead of noisy'),
                                   color: const Color(0xFFF59E0B),
                                   value: profile?.smartReminders ?? true,
                                   onChanged: (value) => AppController.instance
@@ -113,11 +117,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _SettingRow(
                                   icon: Icons.notifications_active_rounded,
                                   label: tr('Push Notifications'),
-                                  subtitle: tr('Task reminders and quick updates'),
+                                  subtitle:
+                                      tr('Task reminders and quick updates'),
                                   color: const Color(0xFF60A5FA),
                                   value: profile?.pushNotifications ?? true,
                                   onChanged: (value) => AppController.instance
-                                      .updatePreferences(pushNotifications: value),
+                                      .updatePreferences(
+                                          pushNotifications: value),
                                 ),
                                 _SettingRow(
                                   icon: Icons.mail_outline_rounded,
@@ -146,14 +152,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _SettingRow(
                                   icon: Icons.palette_rounded,
                                   label: tr('Theme'),
-                                  subtitle: _themeLabel(profile?.themeModeName ?? 'light'),
+                                  subtitle: _themeLabel(
+                                      profile?.themeModeName ?? 'light'),
                                   color: const Color(0xFF8B5CF6),
                                   onTap: _showThemePicker,
                                 ),
                                 _SettingRow(
                                   icon: Icons.language_rounded,
                                   label: tr('Language'),
-                                  subtitle: _languageLabel(profile?.languageCode ?? 'en'),
+                                  subtitle: _languageLabel(
+                                      profile?.languageCode ?? 'en'),
                                   color: const Color(0xFF10B981),
                                   onTap: _showLanguagePicker,
                                 ),
@@ -166,28 +174,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _SettingRow(
                                   icon: Icons.person_outline_rounded,
                                   label: tr('Profile & Account'),
-                                  subtitle: tr('Update your name, photo, and email'),
+                                  subtitle:
+                                      tr('Update your name, photo, and email'),
                                   color: const Color(0xFF64748B),
                                   onTap: () => _openProfileEditor(profile),
                                 ),
                                 _SettingRow(
                                   icon: Icons.shield_outlined,
                                   label: tr('Privacy & Security'),
-                                  subtitle: tr('Password reset and account safety'),
+                                  subtitle:
+                                      tr('Password reset and account safety'),
                                   color: const Color(0xFF10B981),
                                   onTap: () => _showSecuritySheet(profile),
                                 ),
                                 _SettingRow(
                                   icon: Icons.workspace_premium_outlined,
                                   label: tr('Subscription'),
-                                  subtitle: tr('${profile?.planName ?? 'Pro'} plan details'),
+                                  subtitle: tr(
+                                      '${profile?.planName ?? 'Pro'} plan details'),
                                   color: const Color(0xFFF59E0B),
                                   onTap: _showSubscriptionSheet,
                                 ),
                                 _SettingRow(
                                   icon: Icons.help_outline_rounded,
                                   label: tr('Help & Support'),
-                                  subtitle: tr('FAQ, support email, and feedback'),
+                                  subtitle:
+                                      tr('FAQ, support email, and feedback'),
                                   color: const Color(0xFF60A5FA),
                                   onTap: _showHelpSheet,
                                 ),
@@ -200,7 +212,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (!context.mounted) {
                                   return;
                                 }
-                                Navigator.of(context).pushReplacementNamed('/auth');
+                                Navigator.of(context)
+                                    .pushReplacementNamed('/auth');
                               },
                               borderRadius: BorderRadius.circular(18),
                               child: Container(
@@ -237,9 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 'Aria v2.4.1',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: theme
-                                      .colorScheme
-                                      .onSurface
+                                  color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.45),
                                 ),
                               ),
@@ -278,15 +289,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           ListTile(
             title: Text(tr('Light')),
-            onTap: () => AppController.instance.updatePreferences(themeMode: 'light'),
+            onTap: () =>
+                AppController.instance.updatePreferences(themeMode: 'light'),
           ),
           ListTile(
             title: Text(tr('Dark')),
-            onTap: () => AppController.instance.updatePreferences(themeMode: 'dark'),
+            onTap: () =>
+                AppController.instance.updatePreferences(themeMode: 'dark'),
           ),
           ListTile(
             title: Text(tr('System')),
-            onTap: () => AppController.instance.updatePreferences(themeMode: 'system'),
+            onTap: () =>
+                AppController.instance.updatePreferences(themeMode: 'system'),
           ),
         ],
       ),
@@ -302,11 +316,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             title: Text(tr('English')),
             subtitle: Text(tr('Current UI language')),
-            onTap: () => AppController.instance.updatePreferences(languageCode: 'en'),
+            onTap: () =>
+                AppController.instance.updatePreferences(languageCode: 'en'),
           ),
           ListTile(
             title: Text(tr('Russian')),
-            onTap: () => AppController.instance.updatePreferences(languageCode: 'ru'),
+            onTap: () =>
+                AppController.instance.updatePreferences(languageCode: 'ru'),
           ),
         ],
       ),
@@ -329,13 +345,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 tr('Privacy & Security'),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               Text(
-                tr('Signed in as {}', namedArgs: {'email': profile?.email ?? FirebaseAuth.instance.currentUser?.email ?? tr('unknown email')}),
+                tr('Signed in as {}', namedArgs: {
+                  'email': profile?.email ??
+                      FirebaseAuth.instance.currentUser?.email ??
+                      tr('unknown email')
+                }),
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.72),
                 ),
               ),
               const SizedBox(height: 16),
@@ -347,13 +371,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(this.context);
-                  await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                  await FirebaseAuth.instance
+                      .sendPasswordResetEmail(email: email);
                   if (!context.mounted) {
                     return;
                   }
                   navigator.pop();
                   messenger.showSnackBar(
-                    SnackBar(content: Text(tr('Password reset email sent to {}', namedArgs: {'email': email}))),
+                    SnackBar(
+                        content: Text(tr('Password reset email sent to {}',
+                            namedArgs: {'email': email}))),
                   );
                 },
                 icon: const Icon(Icons.lock_reset_rounded),
@@ -364,7 +391,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tr('Your personal data and task collection are scoped to your account in Firestore.'),
                 style: TextStyle(
                   height: 1.5,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.68),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.68),
                 ),
               ),
             ],
@@ -390,7 +420,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 tr('Subscription'),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               Text(
@@ -420,12 +451,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 tr('Help & Support'),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               _SupportRow(
                 title: tr('FAQ'),
-                subtitle: tr('Tap profile photo to edit your account. Tap tasks to complete them.'),
+                subtitle: tr(
+                    'Tap profile photo to edit your account. Tap tasks to complete them.'),
               ),
               const SizedBox(height: 10),
               _SupportRow(
@@ -450,7 +483,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 10),
               _SupportRow(
                 title: tr('Feedback'),
-                subtitle: tr('Use your task notes or profile editor to capture feedback for now.'),
+                subtitle: tr(
+                    'Use your task notes or profile editor to capture feedback for now.'),
               ),
             ],
           ),
@@ -478,7 +512,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
               content,
@@ -574,8 +609,13 @@ class _ProfileCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _ProfileBadge(label: tr('{} Plan', namedArgs: {'plan': safeProfile?.planName ?? 'Pro'})),
-                      _ProfileBadge(label: tr('{}-day streak', namedArgs: {'days': '$streak'})),
+                      _ProfileBadge(
+                          label: tr('{} Plan', namedArgs: {
+                        'plan': safeProfile?.planName ?? 'Pro'
+                      })),
+                      _ProfileBadge(
+                          label: tr('{}-day streak',
+                              namedArgs: {'days': '$streak'})),
                     ],
                   ),
                 ],
@@ -644,7 +684,11 @@ class _SettingsSection extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.9,
-                color: accentColor ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+                color: accentColor ??
+                    Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.55),
               ),
             ),
           ),
@@ -705,7 +749,10 @@ class _SettingRow extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -772,16 +819,3 @@ class _SupportRow extends StatelessWidget {
     );
   }
 }
-
-class _OptionItem {
-  const _OptionItem({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final Future<void> Function() onTap;
-}
-

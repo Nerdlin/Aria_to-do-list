@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'firebase_options.dart';
 import 'screens/add_task_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -16,7 +18,7 @@ Future<void> main() async {
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppController.instance.init();
   runApp(const AriaApp());
 }
@@ -35,6 +37,16 @@ class AriaApp extends StatelessWidget {
           theme: _buildTheme(Brightness.light),
           darkTheme: _buildTheme(Brightness.dark),
           themeMode: AppController.instance.themeMode,
+          locale: Locale(AppController.instance.languageCode),
+          supportedLocales: const [
+            Locale('en'),
+            Locale('ru'),
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
           home: const SplashScreen(),
           routes: {
             '/onboarding': (_) => const OnboardingScreen(),
@@ -75,7 +87,8 @@ ThemeData _buildTheme(Brightness brightness) {
     dividerColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+      backgroundColor:
+          isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
       contentTextStyle: const TextStyle(color: Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),

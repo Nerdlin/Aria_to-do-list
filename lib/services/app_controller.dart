@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,24 +13,33 @@ class AppController extends ChangeNotifier {
 
   static final AppController instance = AppController._();
 
-  final ProfileService _profileService = ProfileService();
+  ProfileService? _profileService;
 
   static const String _themeModeKey = 'theme_mode';
+  static const String _languageCodeKey = 'language_code';
 
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<UserProfile?>? _profileSubscription;
 
   ThemeMode _themeMode = ThemeMode.light;
+  String _languageCode = 'en';
   UserProfile? _profile;
   bool _initialized = false;
 
   ThemeMode get themeMode => _themeMode;
+  String get languageCode => _languageCode;
   UserProfile? get profile => _profile;
   bool get initialized => _initialized;
+
+  ProfileService get _profiles => _profileService ??= ProfileService();
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _themeMode = _themeModeFromName(prefs.getString(_themeModeKey) ?? 'light');
+    _languageCode = _normalizeLanguageCode(
+      prefs.getString(_languageCodeKey) ??
+          PlatformDispatcher.instance.locale.languageCode,
+    );
 
     _authSubscription ??=
         FirebaseAuth.instance.authStateChanges().listen(_handleAuthChanged);
@@ -45,7 +55,7 @@ class AppController extends ChangeNotifier {
       return;
     }
 
-    await _profileService.ensureProfileForUser(user);
+    await _profiles.ensureProfileForUser(user);
   }
 
   Future<void> updateProfile({
@@ -61,14 +71,16 @@ class AppController extends ChangeNotifier {
     }
 
     _profile = existing.copyWith(
-      displayName: displayName.trim().isEmpty ? existing.displayName : displayName.trim(),
+      displayName: displayName.trim().isEmpty
+          ? existing.displayName
+          : displayName.trim(),
       email: email.trim().isEmpty ? existing.email : email.trim(),
       avatarSeed: avatarSeed,
       clearAvatarPath: removeAvatar,
     );
     notifyListeners();
 
-    await _profileService.updateProfile(
+    await _profiles.updateProfile(
       displayName: displayName,
       email: email,
       avatarSeed: avatarSeed,
@@ -95,6 +107,12 @@ class AppController extends ChangeNotifier {
       if (themeMode != null) {
         _themeMode = _themeModeFromName(themeMode);
         await _persistThemeMode(themeMode);
+      }
+      if (languageCode != null) {
+        _languageCode = _normalizeLanguageCode(languageCode);
+        await _persistLanguageCode(_languageCode);
+      }
+      if (themeMode != null || languageCode != null) {
         notifyListeners();
       }
       return;
@@ -114,10 +132,14 @@ class AppController extends ChangeNotifier {
     );
 
     _themeMode = _themeModeFromName(nextThemeName);
+    if (languageCode != null) {
+      _languageCode = _normalizeLanguageCode(languageCode);
+    }
     await _persistThemeMode(nextThemeName);
+    await _persistLanguageCode(_languageCode);
     notifyListeners();
 
-    await _profileService.updatePreferences(
+    await _profiles.updatePreferences(
       themeMode: themeMode,
       languageCode: languageCode,
       aiAutoPlanning: aiAutoPlanning,
@@ -139,7 +161,7 @@ class AppController extends ChangeNotifier {
     _profile = existing.copyWith(clearAvatarPath: true);
     notifyListeners();
 
-    await _profileService.removeAvatar();
+    await _profiles.removeAvatar();
     await refreshProfile();
   }
 
@@ -157,13 +179,17 @@ class AppController extends ChangeNotifier {
       return;
     }
 
-    final initialProfile = await _profileService.ensureProfileForUser(user);
+    final initialProfile = await _profiles.ensureProfileForUser(user);
     _profile = initialProfile;
     _themeMode = _themeModeFromName(initialProfile.themeModeName);
+    _languageCode = _normalizeLanguageCode(initialProfile.languageCode);
     await _persistThemeMode(initialProfile.themeModeName);
+    await _persistLanguageCode(_languageCode);
     notifyListeners();
 
-    _profileSubscription = _profileService.watchProfile(user.uid).listen((profile) async {
+    _profileSubscription = _profiles.watchProfile(user.uid).listen((
+      profile,
+    ) async {
       if (profile == null) {
         return;
       }
@@ -173,6 +199,11 @@ class AppController extends ChangeNotifier {
       if (_themeMode != resolvedTheme) {
         _themeMode = resolvedTheme;
         await _persistThemeMode(profile.themeModeName);
+      }
+      final resolvedLanguage = _normalizeLanguageCode(profile.languageCode);
+      if (_languageCode != resolvedLanguage) {
+        _languageCode = resolvedLanguage;
+        await _persistLanguageCode(_languageCode);
       }
       notifyListeners();
     });
@@ -193,5 +224,14 @@ class AppController extends ChangeNotifier {
   Future<void> _persistThemeMode(String themeModeName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModeKey, themeModeName);
+  }
+
+  String _normalizeLanguageCode(String value) {
+    return value.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+  }
+
+  Future<void> _persistLanguageCode(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageCodeKey, languageCode);
   }
 }
