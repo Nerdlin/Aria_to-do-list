@@ -4,9 +4,10 @@ import 'package:flutter/services.dart';
 
 import '../models/user_profile.dart';
 import '../services/app_controller.dart';
-import '../utils/translations.dart';
+import '../services/auth_error_mapper.dart';
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 import '../widgets/profile_avatar.dart';
 import 'edit_profile_screen.dart';
 
@@ -44,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                         child: Text(
-                          'Settings',
+                          tr('Settings'),
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
@@ -191,9 +192,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   icon: Icons.workspace_premium_outlined,
                                   label: tr('Subscription'),
                                   subtitle: tr(
-                                      '${profile?.planName ?? 'Pro'} plan details'),
+                                    '{} plan details',
+                                    namedArgs: {
+                                      'plan': profile?.planName ?? 'Pro',
+                                    },
+                                  ),
                                   color: const Color(0xFFF59E0B),
-                                  onTap: _showSubscriptionSheet,
+                                  onTap: () => Navigator.pushNamed(
+                                      context, '/subscription'),
                                 ),
                                 _SettingRow(
                                   icon: Icons.help_outline_rounded,
@@ -208,6 +214,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 12),
                             InkWell(
                               onTap: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(tr('Sign out?')),
+                                    content: Text(
+                                      tr('You will need to sign in again to access your tasks.'),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: Text(tr('Cancel')),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFFEF4444),
+                                        ),
+                                        child: Text(tr('Sign Out')),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed != true) {
+                                  return;
+                                }
                                 await AppController.instance.signOut();
                                 if (!context.mounted) {
                                   return;
@@ -371,17 +405,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                   final navigator = Navigator.of(context);
                   final messenger = ScaffoldMessenger.of(this.context);
-                  await FirebaseAuth.instance
-                      .sendPasswordResetEmail(email: email);
-                  if (!context.mounted) {
-                    return;
+                  try {
+                    await FirebaseAuth.instance
+                        .sendPasswordResetEmail(email: email);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    navigator.pop();
+                    messenger.showSnackBar(
+                      SnackBar(
+                          content: Text(tr('Password reset email sent to {}',
+                              namedArgs: {'email': email}))),
+                    );
+                  } on FirebaseAuthException catch (error) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(authErrorMessage(error))),
+                    );
                   }
-                  navigator.pop();
-                  messenger.showSnackBar(
-                    SnackBar(
-                        content: Text(tr('Password reset email sent to {}',
-                            namedArgs: {'email': email}))),
-                  );
                 },
                 icon: const Icon(Icons.lock_reset_rounded),
                 label: Text(tr('Send password reset email')),
@@ -396,37 +436,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       .onSurface
                       .withValues(alpha: 0.68),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showSubscriptionSheet() async {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tr('Subscription'),
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                tr('Aria Pro is currently represented as an in-app profile tier. Billing is not wired to a payment provider in this project yet, but the settings page now opens plan details instead of doing nothing.'),
-                style: const TextStyle(height: 1.5),
               ),
             ],
           ),
@@ -579,6 +588,7 @@ class _ProfileCard extends StatelessWidget {
               displayName: safeProfile?.displayName ?? tr('Aria User'),
               avatarSeed: safeProfile?.avatarSeed ?? 0,
               imagePath: safeProfile?.localAvatarPath,
+              imageBytes: safeProfile?.localAvatarBytes,
               size: 58,
               fontSize: 24,
               borderRadius: 20,

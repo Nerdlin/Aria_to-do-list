@@ -5,6 +5,7 @@ import '../screens/analytics_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/tasks_screen.dart';
+import '../services/update_service.dart';
 import '../utils/translations.dart';
 
 class AppShell extends StatefulWidget {
@@ -34,6 +35,9 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.instance.checkForUpdates(context);
+    });
   }
 
   @override

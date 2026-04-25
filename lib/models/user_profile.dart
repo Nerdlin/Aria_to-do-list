@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -18,6 +20,11 @@ class UserProfile {
     required this.planName,
     required this.avatarSeed,
     this.localAvatarPath,
+    this.localAvatarBytes,
+    this.subscriptionStatus = 'free',
+    this.subscriptionStartedAt,
+    this.subscriptionRenewsAt,
+    this.subscriptionReceiptId,
     this.updatedAt,
   });
 
@@ -36,12 +43,18 @@ class UserProfile {
   final String planName;
   final int avatarSeed;
   final String? localAvatarPath;
+  final Uint8List? localAvatarBytes;
+  final String subscriptionStatus;
+  final DateTime? subscriptionStartedAt;
+  final DateTime? subscriptionRenewsAt;
+  final String? subscriptionReceiptId;
   final DateTime? updatedAt;
 
   factory UserProfile.fromMap(
     String uid,
     Map<String, dynamic> data, {
     String? localAvatarPath,
+    Uint8List? localAvatarBytes,
   }) {
     final preferences = (data['preferences'] as Map<String, dynamic>?) ??
         const <String, dynamic>{};
@@ -61,9 +74,16 @@ class UserProfile {
       pushNotifications: preferences['pushNotifications'] as bool? ?? true,
       dailyDigest: preferences['dailyDigest'] as bool? ?? true,
       weeklyReport: preferences['weeklyReport'] as bool? ?? true,
-      planName: (data['planName'] as String?) ?? 'Pro',
+      planName: _normalizePlanName(data['planName'] as String?),
       avatarSeed: data['avatarSeed'] as int? ?? 0,
       localAvatarPath: localAvatarPath,
+      localAvatarBytes: localAvatarBytes,
+      subscriptionStatus: (data['subscriptionStatus'] as String?) ?? 'free',
+      subscriptionStartedAt:
+          (data['subscriptionStartedAt'] as Timestamp?)?.toDate(),
+      subscriptionRenewsAt:
+          (data['subscriptionRenewsAt'] as Timestamp?)?.toDate(),
+      subscriptionReceiptId: data['subscriptionReceiptId'] as String?,
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -71,6 +91,7 @@ class UserProfile {
   factory UserProfile.fallback(
     User user, {
     String? localAvatarPath,
+    Uint8List? localAvatarBytes,
     String languageCode = 'en',
   }) {
     return UserProfile(
@@ -86,9 +107,11 @@ class UserProfile {
       pushNotifications: true,
       dailyDigest: true,
       weeklyReport: true,
-      planName: 'Pro',
+      planName: 'Free',
       avatarSeed: user.uid.hashCode.abs() % 6,
       localAvatarPath: localAvatarPath,
+      localAvatarBytes: localAvatarBytes,
+      subscriptionStatus: 'free',
       updatedAt: null,
     );
   }
@@ -108,7 +131,14 @@ class UserProfile {
     String? planName,
     int? avatarSeed,
     String? localAvatarPath,
+    Uint8List? localAvatarBytes,
     bool clearAvatarPath = false,
+    bool clearAvatarBytes = false,
+    String? subscriptionStatus,
+    DateTime? subscriptionStartedAt,
+    DateTime? subscriptionRenewsAt,
+    String? subscriptionReceiptId,
+    bool clearSubscriptionDates = false,
     DateTime? updatedAt,
   }) {
     return UserProfile(
@@ -128,6 +158,18 @@ class UserProfile {
       avatarSeed: avatarSeed ?? this.avatarSeed,
       localAvatarPath:
           clearAvatarPath ? null : (localAvatarPath ?? this.localAvatarPath),
+      localAvatarBytes:
+          clearAvatarBytes ? null : (localAvatarBytes ?? this.localAvatarBytes),
+      subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
+      subscriptionStartedAt: clearSubscriptionDates
+          ? null
+          : (subscriptionStartedAt ?? this.subscriptionStartedAt),
+      subscriptionRenewsAt: clearSubscriptionDates
+          ? null
+          : (subscriptionRenewsAt ?? this.subscriptionRenewsAt),
+      subscriptionReceiptId: clearSubscriptionDates
+          ? null
+          : (subscriptionReceiptId ?? this.subscriptionReceiptId),
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -139,6 +181,13 @@ class UserProfile {
       'themeMode': themeModeName,
       'languageCode': languageCode,
       'planName': planName,
+      'subscriptionStatus': subscriptionStatus,
+      if (subscriptionStartedAt != null)
+        'subscriptionStartedAt': Timestamp.fromDate(subscriptionStartedAt!),
+      if (subscriptionRenewsAt != null)
+        'subscriptionRenewsAt': Timestamp.fromDate(subscriptionRenewsAt!),
+      if (subscriptionReceiptId != null)
+        'subscriptionReceiptId': subscriptionReceiptId,
       'avatarSeed': avatarSeed,
       'preferences': {
         'aiAutoPlanning': aiAutoPlanning,
@@ -174,5 +223,17 @@ class UserProfile {
         .toList();
 
     return pieces.isEmpty ? 'Aria User' : pieces.join(' ');
+  }
+
+  static String _normalizePlanName(String? value) {
+    switch ((value ?? '').toLowerCase()) {
+      case 'business':
+        return 'Business';
+      case 'pro':
+        return 'Pro';
+      case 'free':
+      default:
+        return 'Free';
+    }
   }
 }

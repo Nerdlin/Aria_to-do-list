@@ -83,9 +83,7 @@ class TaskService {
     String note = '',
     bool isAiPick = false,
   }) async {
-    if (currentUserId == null) {
-      return;
-    }
+    final userId = _requireUserId();
 
     await tasksCollection.add({
       'title': title,
@@ -96,21 +94,48 @@ class TaskService {
       'isCompleted': false,
       'isAiPick': isAiPick,
       'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
       'completedAt': null,
       'note': note,
-      'userId': currentUserId,
+      'userId': userId,
     });
   }
 
   Future<void> toggleTask(String taskId, bool currentStatus) async {
-    await tasksCollection.doc(taskId).update({
+    final document = await _ownedTaskDocument(taskId);
+    await document.update({
       'isCompleted': !currentStatus,
       'completedAt': !currentStatus ? FieldValue.serverTimestamp() : null,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
   Future<void> deleteTask(String taskId) async {
-    await tasksCollection.doc(taskId).delete();
+    final document = await _ownedTaskDocument(taskId);
+    await document.delete();
+  }
+
+  Future<void> updateTask(
+    String taskId, {
+    required String title,
+    required String priority,
+    required String category,
+    required DateTime date,
+    required int durationMinutes,
+    String note = '',
+    bool isAiPick = false,
+  }) async {
+    final document = await _ownedTaskDocument(taskId);
+    await document.update({
+      'title': title,
+      'priority': priority,
+      'category': category,
+      'date': Timestamp.fromDate(date),
+      'durationMinutes': durationMinutes,
+      'note': note,
+      'isAiPick': isAiPick,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Stream<List<TaskItem>> getTasksStream() {
@@ -126,5 +151,29 @@ class TaskService {
           (snapshot) =>
               snapshot.docs.map((doc) => TaskItem.fromFirestore(doc)).toList(),
         );
+  }
+
+  Future<List<TaskItem>> getTasksOnce() {
+    return getTasksStream().first;
+  }
+
+  String _requireUserId() {
+    final userId = currentUserId;
+    if (userId == null) {
+      throw StateError('No authenticated user');
+    }
+    return userId;
+  }
+
+  Future<DocumentReference<Map<String, dynamic>>> _ownedTaskDocument(
+    String taskId,
+  ) async {
+    final userId = _requireUserId();
+    final document = tasksCollection.doc(taskId);
+    final snapshot = await document.get();
+    if (!snapshot.exists || snapshot.data()?['userId'] != userId) {
+      throw StateError('Task does not belong to the current user');
+    }
+    return document;
   }
 }

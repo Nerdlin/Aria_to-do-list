@@ -54,5 +54,16 @@ class AuthService {
     }
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (error) {
+      if (kDebugMode) {
+        print('Error during password reset: ${error.message}');
+      }
+      rethrow;
+    }
+  }
+
   Stream<User?> get user => _auth.authStateChanges();
 }

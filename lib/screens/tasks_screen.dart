@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/app_colors.dart';
 import '../utils/translations.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -43,7 +45,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'My Tasks',
+                          tr('My Tasks'),
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w800,
@@ -52,7 +54,17 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${TaskMetrics.completedCount(allTasks)} completed, ${allTasks.where((task) => !task.isCompleted).length} still in motion',
+                          tr(
+                            '{completed} completed, {pending} still in motion',
+                            namedArgs: {
+                              'completed': TaskMetrics.completedCount(allTasks)
+                                  .toString(),
+                              'pending': allTasks
+                                  .where((task) => !task.isCompleted)
+                                  .length
+                                  .toString(),
+                            },
+                          ),
                           style: TextStyle(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.68),
@@ -207,7 +219,25 @@ class _TasksScreenState extends State<TasksScreen> {
                         final task = filteredTasks[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 14),
-                          child: _buildTaskCard(context, task),
+                          child: Dismissible(
+                            key: ValueKey(task.id),
+                            direction: DismissDirection.endToStart,
+                            confirmDismiss: (_) => _confirmDismiss(task),
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 24),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: AppColors.error,
+                                size: 28,
+                              ),
+                            ),
+                            child: _buildTaskCard(context, task),
+                          ),
                         );
                       },
                     ),
@@ -236,11 +266,12 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget _buildTaskCard(BuildContext context, TaskItem task) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final priorityColor = _priorityColor(task.priority);
+    final priorityColor = AppColors.priorityColor(task.priority);
     final isOverdue = !task.isCompleted && task.date.isBefore(DateTime.now());
 
     return InkWell(
-      onTap: () => _taskService.toggleTask(task.id, task.isCompleted),
+      onTap: () => _toggleTask(task),
+      onLongPress: () => _editTask(task),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -258,7 +289,7 @@ class _TasksScreenState extends State<TasksScreen> {
               margin: const EdgeInsets.only(top: 2),
               decoration: BoxDecoration(
                 color: task.isCompleted
-                    ? const Color(0xFF7C3AED)
+                    ? AppColors.primary
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(9),
                 border: task.isCompleted
@@ -301,8 +332,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Row(
@@ -311,7 +341,7 @@ class _TasksScreenState extends State<TasksScreen> {
                               Icon(
                                 Icons.auto_awesome_rounded,
                                 size: 12,
-                                color: Color(0xFF7C3AED),
+                                color: AppColors.primary,
                               ),
                               SizedBox(width: 4),
                               Text(
@@ -319,7 +349,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF7C3AED),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
@@ -353,23 +383,26 @@ class _TasksScreenState extends State<TasksScreen> {
                       _buildMetaPill(
                         context,
                         label: task.category,
-                        color: _categoryColor(task.category),
+                        color: AppColors.categoryColor(task.category),
                       ),
                       _buildMetaPill(
                         context,
                         label: DateFormat('EEE, h:mm a').format(task.date),
-                        color: const Color(0xFF3B82F6),
+                        color: AppColors.info,
                       ),
                       _buildMetaPill(
                         context,
-                        label: '${task.durationMinutes} min',
-                        color: const Color(0xFF10B981),
+                        label: tr(
+                          '{min} min',
+                          namedArgs: {'min': task.durationMinutes.toString()},
+                        ),
+                        color: AppColors.success,
                       ),
                       if (isOverdue)
                         _buildMetaPill(
                           context,
-                          label: 'Overdue',
-                          color: const Color(0xFFEF4444),
+                          label: tr('Overdue'),
+                          color: AppColors.error,
                         ),
                     ],
                   ),
@@ -378,9 +411,9 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
             const SizedBox(width: 12),
             IconButton(
-              onPressed: () => _taskService.deleteTask(task.id),
+              onPressed: () => _confirmAndDelete(task),
               icon: const Icon(Icons.delete_outline_rounded),
-              color: const Color(0xFFEF4444),
+              color: AppColors.error,
             ),
           ],
         ),
@@ -404,7 +437,7 @@ class _TasksScreenState extends State<TasksScreen> {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
-        label,
+        tr(label),
         style: TextStyle(
           color: color,
           fontSize: 11,
@@ -441,33 +474,109 @@ class _TasksScreenState extends State<TasksScreen> {
     }).toList();
   }
 
-  Color _priorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return const Color(0xFFEF4444);
-      case 'Low':
-        return const Color(0xFF10B981);
-      case 'Medium':
-      default:
-        return const Color(0xFFF59E0B);
+  Future<void> _toggleTask(TaskItem task) async {
+    HapticFeedback.lightImpact();
+    try {
+      await _taskService.toggleTask(task.id, task.isCompleted);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Unable to update task.'))),
+      );
     }
   }
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Personal':
-        return const Color(0xFF3B82F6);
-      case 'Health':
-        return const Color(0xFF10B981);
-      case 'Learning':
-        return const Color(0xFFF59E0B);
-      case 'Finance':
-        return const Color(0xFFEF4444);
-      case 'Creative':
-        return const Color(0xFFEC4899);
-      case 'Work':
-      default:
-        return const Color(0xFF7C3AED);
+  void _editTask(TaskItem task) {
+    HapticFeedback.selectionClick();
+    Navigator.pushNamed(context, '/add-task', arguments: task);
+  }
+
+  Future<bool> _confirmDismiss(TaskItem task) async {
+    HapticFeedback.mediumImpact();
+    await _taskService.deleteTask(task.id);
+    if (!mounted) {
+      return true;
+    }
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('Task deleted.')),
+        action: SnackBarAction(
+          label: tr('Undo'),
+          onPressed: () => _restoreTask(task),
+        ),
+      ),
+    );
+    return true;
+  }
+
+  Future<void> _confirmAndDelete(TaskItem task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tr('Delete task?')),
+        content: Text(
+          tr('"{title}" will be permanently removed.',
+              namedArgs: {'title': task.title}),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(tr('Delete')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
+    try {
+      await _taskService.deleteTask(task.id);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr('Task deleted.')),
+          action: SnackBarAction(
+            label: tr('Undo'),
+            onPressed: () => _restoreTask(task),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Unable to delete task.'))),
+      );
+    }
+  }
+
+  Future<void> _restoreTask(TaskItem task) async {
+    try {
+      await _taskService.addTask(
+        title: task.title,
+        priority: task.priority,
+        category: task.category,
+        date: task.date,
+        durationMinutes: task.durationMinutes,
+        note: task.note,
+        isAiPick: task.isAiPick,
+      );
+    } catch (_) {
+      // Silently fail — task was already deleted, best-effort restore.
     }
   }
 }

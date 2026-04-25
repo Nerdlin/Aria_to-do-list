@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../services/auth_error_mapper.dart';
 import '../services/auth_service.dart';
 import '../utils/translations.dart';
 
@@ -16,8 +17,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -116,62 +119,88 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             : const Color(0xFFF1F5F9),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _nameController,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: InputDecoration(
-                            labelText: tr('Name'),
-                            prefixIcon: const Icon(Icons.person_outline),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            labelText: tr('Email'),
-                            prefixIcon: const Icon(Icons.email_outlined),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: tr('Password'),
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: FilledButton(
-                            onPressed: _isLoading ? null : _register,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.name],
+                            validator: _validateName,
+                            decoration: InputDecoration(
+                              labelText: tr('Name'),
+                              prefixIcon: const Icon(Icons.person_outline),
                             ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.6,
-                                    ),
-                                  )
-                                : Text(
-                                    tr('Create Account'),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.email],
+                            validator: _validateEmail,
+                            decoration: InputDecoration(
+                              labelText: tr('Email'),
+                              prefixIcon: const Icon(Icons.email_outlined),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.newPassword],
+                            validator: _validatePassword,
+                            onFieldSubmitted: (_) => _register(),
+                            decoration: InputDecoration(
+                              labelText: tr('Password'),
+                              prefixIcon:
+                                  const Icon(Icons.lock_outline_rounded),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: FilledButton(
+                              onPressed: _isLoading ? null : _register,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2.6,
+                                      ),
+                                    )
+                                  : Text(
+                                      tr('Create Account'),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -184,6 +213,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Future<void> _register() async {
+    FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -204,13 +238,41 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(error.message ?? tr('Unable to create account.'))),
+        SnackBar(content: Text(authErrorMessage(error))),
       );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  String? _validateName(String? value) {
+    if ((value ?? '').trim().isEmpty) {
+      return tr('Name is required.');
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) {
+      return tr('Email is required.');
+    }
+    if (!email.contains('@') || !email.contains('.')) {
+      return tr('Please enter a valid email address.');
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    final password = value?.trim() ?? '';
+    if (password.isEmpty) {
+      return tr('Password is required.');
+    }
+    if (password.length < 6) {
+      return tr('Password must be at least 6 characters.');
+    }
+    return null;
   }
 }

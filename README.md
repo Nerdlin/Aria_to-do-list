@@ -18,8 +18,10 @@
 *   📝 **Разбивка задач**: AI помогает разделить сложные задачи на простые выполнимые шаги.
 *   📊 **Аналитика и статистика**: Отслеживание фокус-времени, завершенных задач и "стриков" (ежедневной активности).
 *   🌍 **Мультиязычность**: Поддержка английского и русского языков.
-*   🔐 **Безопасность**: API ключи хранятся в .env файле и не попадают в Git.
+*   🔐 **Безопасность**: API ключи не попадают в Git; для production рекомендуется backend-proxy для AI запросов.
 *   📱 **Кроссплатформенность**: Готово к запуску на Android и iOS из единой кодовой базы.
+*   🔔 **Напоминания**: Уведомления о задачах и событиях.
+*   👤 **Управление профилем**: Изменение имени и аватара пользователя.
 
 ---
 
@@ -30,6 +32,7 @@
 | **Splash Screen** | ✅ Градиент, автонавигация |
 | **Onboarding (3 слайда)** | ✅ Анимации, Smart Planning, Priority Intelligence, Time Optimization |
 | **Auth Screen** | ✅ Firebase Auth, красивые формы |
+| **Registration Screen** | ✅ Firebase Auth, валидация, ошибки |
 | **Home Screen** | ✅ AI Insight, Quick Stats, Schedule, Priority Tasks, Weekly Progress, Focus Timer |
 | **Tasks Screen** | ✅ Поиск, фильтры (All/Today/High/AI Pick), toggle completion, delete |
 | **Add Task Screen** | ✅ AI Suggestions, AI Priority Analysis, 6 категорий, date/time picker |
@@ -59,18 +62,17 @@ flutter pub get
 # Скопируйте шаблон
 cp .env.example .env
 
-# Получите бесплатный API ключ на https://openrouter.ai/keys
-# Откройте .env и добавьте ваш ключ:
-OPENROUTER_API_KEY=sk-or-v1-ваш_ключ_здесь
+# Откройте .env и добавьте ваши ключи:
+AI_BASE_URL=https://your-ai-endpoint.com
+AI_API_KEY=your-api-key-here
 AI_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+INITIAL_PASSWORD=your-initial-password
 ```
 
 **Рекомендуемые бесплатные модели:**
 - `nvidia/nemotron-3-super-120b-a12b:free` (120B параметров, очень умная)
 - `meta-llama/llama-3.2-3b-instruct:free` (быстрая)
 - `google/gemma-2-9b-it:free` (сбалансированная)
-
-Подробнее: [ENV_SETUP.md](ENV_SETUP.md)
 
 ### 3. Автоматический запуск
 
@@ -105,13 +107,13 @@ flutter pub get
 ```
 
 ### 3. Настройка Firebase
-Файл `google-services.json` уже настроен в `android/app/`. 
+Firebase инициализируется через `lib/firebase_options.dart`, поэтому Android debug-сборка не зависит от `android/app/google-services.json`.
 
 Если нужно использовать свой Firebase проект:
 1. Создайте проект в [Firebase Console](https://console.firebase.google.com/)
 2. Включите **Authentication** (Email/Password)
 3. Включите **Firestore Database** (Test Mode)
-4. Скачайте `google-services.json` и замените в `android/app/`
+4. Перегенерируйте `lib/firebase_options.dart` через FlutterFire CLI или обновите значения вручную
 
 ### 4. Запуск эмулятора
 ```bash
@@ -130,22 +132,40 @@ flutter run -d emulator-5554
 ```text
 lib/
 ├── screens/            # Экраны приложения
+│   ├── splash_screen.dart
+│   ├── onboarding_screen.dart
+│   ├── auth_screen.dart
+│   ├── registration_screen.dart
 │   ├── home_screen.dart
 │   ├── tasks_screen.dart
-│   ├── ai_assistant_screen.dart    # 🤖 AI-помощник
+│   ├── add_task_screen.dart
+│   ├── ai_assistant_screen.dart       # 🤖 AI-помощник
 │   ├── analytics_screen.dart
 │   ├── settings_screen.dart
-│   └── add_task_screen.dart
+│   ├── edit_profile_screen.dart
+│   └── subscription_screen.dart
 ├── services/           # Бизнес-логика и API
-│   ├── ai_service.dart             # 🤖 OpenRouter API интеграция
-│   ├── task_service.dart           # Firestore задачи
-│   ├── auth_service.dart           # Firebase Auth
-│   └── task_metrics.dart           # Аналитика
+│   ├── ai_service.dart                  # 🤖 OpenRouter API интеграция
+│   ├── task_service.dart                # Firestore задачи
+│   ├── auth_service.dart                # Firebase Auth
+│   ├── auth_error_mapper.dart           # Обработка ошибок auth
+│   ├── profile_service.dart             # Профиль пользователя
+│   ├── subscription_service.dart        # Подписки
+│   ├── notification_service.dart        # Уведомления
+│   ├── update_service.dart              # Обновления приложения
+│   ├── app_controller.dart              # Контроллер приложения
+│   └── task_metrics.dart                # Аналитика
 ├── widgets/            # Переиспользуемые компоненты
-│   └── app_shell.dart              # Навигация (5 вкладок)
+│   ├── app_shell.dart                   # Навигация (5 вкладок)
+│   ├── focus_timer_sheet.dart           # Focus Timer
+│   └── profile_avatar.dart              # Аватар профиля
+├── models/             # Модели данных
+│   └── user_profile.dart
 ├── utils/              # Утилиты
-│   └── translations.dart           # Мультиязычность (EN/RU)
-└── main.dart           # Точка входа
+│   ├── app_colors.dart                   # Цветовая палитра
+│   └── translations.dart               # Мультиязычность (EN/RU)
+├── firebase_options.dart
+└── main.dart            # Точка входа
 ```
 
 ---
@@ -160,6 +180,9 @@ lib/
 *   **Форматирование дат:** `intl`
 *   **Environment Variables:** `flutter_dotenv`
 *   **HTTP клиент:** `http`
+*   **Локальное хранилище:** `shared_preferences`
+*   **Выбор изображений:** `image_picker`
+*   **Иконки:** `cupertino_icons`
 
 ---
 
@@ -181,18 +204,20 @@ lib/
 ## 📊 Статистика проекта
 
 - ✅ **0 ошибок** анализа кода
-- 📁 **22** Dart файлов
-- 📝 **~2000+** строк кода
-- 🎨 **8** основных экранов
-- 🔧 **7** сервисов
+- 📁 **30** Dart файлов
+- 📝 **~3500+** строк кода
+- 🎨 **12** основных экранов
+- 🔧 **10** сервисов
 - 🤖 **AI-интеграция** с OpenRouter (бесплатно)
 - 🌍 **2 языка** (EN/RU)
+- 📦 **Версия:** 1.0.1+2
 
 ---
 
 ## 🔐 Безопасность
 
-- ✅ API ключи в `.env` (не коммитятся в Git)
+- ✅ API ключи в `.env` для локальной разработки (не коммитятся в Git)
+- ⚠️ Для production AI ключи нужно держать на backend/proxy, так как Flutter assets попадают в клиентскую сборку
 - ✅ Firebase credentials защищены
 - ✅ `.gitignore` настроен правильно
 - ✅ Автоматический fallback между AI провайдерами
@@ -200,9 +225,14 @@ lib/
 
 ---
 
-## 📝 Последние обновления (2026-04-22)
+## 📝 Последние обновления (25.04.2026)
 
 ### ✨ Добавлено:
+- 📱 **Экран подписки** - управление Premium подпиской
+- 👤 **Редактирование профиля** - изменение имени и аватара
+- 📝 **Регистрация** - отдельный экран регистрации
+- 🔔 **Уведомления** - сервис для напоминаний о задачах
+- 👤 **Профиль пользователя** - модель и сервис профиля
 - 🤖 **OpenRouter интеграция** - поддержка множества бесплатных AI моделей
 - 🧠 **Nvidia Nemotron 120B** - мощная бесплатная модель по умолчанию
 - 💡 **AI-анализ приоритетов** - кнопка "Analyze" при создании задач
@@ -219,6 +249,7 @@ lib/
 - ✅ Обновлена документация (ENV_SETUP.md)
 - ✅ .gitignore для защиты секретов
 - ✅ Fallback система для AI запросов
+- ⏱️ **Focus Timer** - таймер для фокусирования
 
 ### 🐛 Исправлено:
 - ✅ UI overflow в нижней навигации

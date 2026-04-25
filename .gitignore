@@ -54,4 +54,16 @@ android/app/google-services.json
 # API Keys and Secrets
 *.key
 *.pem
+*.jks
 secrets/
+android/key.properties
+serviceAccountKey.json
+
+# Scripts and Node.js
+scripts/node_modules/
+scripts/package-lock.json
+scripts/serviceAccountKey.json
+
+# Release keys
+android/app/*.jks
+android/app/aria-release-key.jks

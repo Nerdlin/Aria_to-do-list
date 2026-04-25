@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -8,6 +9,7 @@ class ProfileAvatar extends StatelessWidget {
     required this.displayName,
     required this.avatarSeed,
     this.imagePath,
+    this.imageBytes,
     this.size = 56,
     this.fontSize = 24,
     this.borderRadius = 18,
@@ -16,6 +18,7 @@ class ProfileAvatar extends StatelessWidget {
   final String displayName;
   final int avatarSeed;
   final String? imagePath;
+  final Uint8List? imageBytes;
   final double size;
   final double fontSize;
   final double borderRadius;
@@ -35,8 +38,19 @@ class ProfileAvatar extends StatelessWidget {
     final initial =
         normalizedName.isEmpty ? 'A' : normalizedName[0].toUpperCase();
     final gradient = _gradients[avatarSeed % _gradients.length];
-    final file = _resolvedFile(imagePath);
+    if (imageBytes != null && imageBytes!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Image.memory(
+          imageBytes!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
 
+    final file = _resolvedFile(imagePath);
     if (file != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -70,6 +84,9 @@ class ProfileAvatar extends StatelessWidget {
 
   File? _resolvedFile(String? path) {
     if (path == null || path.trim().isEmpty) {
+      return null;
+    }
+    if (kIsWeb) {
       return null;
     }
 

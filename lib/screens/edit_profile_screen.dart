@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/user_profile.dart';
 import '../services/app_controller.dart';
+import '../services/auth_error_mapper.dart';
+import '../utils/translations.dart';
 import '../widgets/profile_avatar.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -22,7 +26,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late int _avatarSeed;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String? _avatarSourcePath;
+  Uint8List? _avatarBytes;
   bool _removeAvatar = false;
   bool _isSaving = false;
 
@@ -50,13 +56,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final previewPath = _removeAvatar
         ? null
         : (_avatarSourcePath ?? widget.profile.localAvatarPath);
+    final previewBytes = _removeAvatar
+        ? null
+        : (_avatarBytes ?? widget.profile.localAvatarBytes);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          tr('Edit Profile'),
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
           TextButton(
@@ -67,9 +76,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
-                    'Save',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                : Text(
+                    tr('Save'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),
         ],
@@ -94,6 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         : _nameController.text,
                     avatarSeed: _avatarSeed,
                     imagePath: previewPath,
+                    imageBytes: previewBytes,
                     size: 88,
                     fontSize: 34,
                     borderRadius: 28,
@@ -107,7 +117,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       FilledButton.icon(
                         onPressed: _pickAvatar,
                         icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Choose Photo'),
+                        label: Text(tr('Choose Photo')),
                       ),
                       OutlinedButton.icon(
                         onPressed: () {
@@ -117,24 +127,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           });
                         },
                         icon: const Icon(Icons.auto_awesome_outlined),
-                        label: const Text('Shuffle Avatar'),
+                        label: Text(tr('Shuffle Avatar')),
                       ),
-                      if (previewPath != null)
+                      if (previewPath != null || previewBytes != null)
                         TextButton.icon(
                           onPressed: () {
                             setState(() {
                               _avatarSourcePath = null;
+                              _avatarBytes = null;
                               _removeAvatar = true;
                             });
                           },
                           icon: const Icon(Icons.delete_outline),
-                          label: const Text('Remove Photo'),
+                          label: Text(tr('Remove Photo')),
                         ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Change your name, avatar, and contact email.',
+                    tr('Change your name, avatar, and contact email.'),
                     style: TextStyle(color: mutedColor),
                     textAlign: TextAlign.center,
                   ),
@@ -149,42 +160,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: theme.dividerColor),
               ),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _nameController,
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Display name',
-                      prefixIcon: Icon(Icons.person_outline),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (_) => setState(() {}),
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.name],
+                      validator: _validateName,
+                      decoration: InputDecoration(
+                        labelText: tr('Display name'),
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.email],
+                      validator: _validateEmail,
+                      onFieldSubmitted: (_) => _saveProfile(),
+                      decoration: InputDecoration(
+                        labelText: tr('Email'),
+                        prefixIcon: const Icon(Icons.email_outlined),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF172033)
-                          : const Color(0xFFF8F7FF),
-                      borderRadius: BorderRadius.circular(18),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF172033)
+                            : const Color(0xFFF8F7FF),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        tr('If email update fails, Firebase may require a fresh sign-in before changing it.'),
+                        style: TextStyle(color: mutedColor, height: 1.5),
+                      ),
                     ),
-                    child: Text(
-                      'If email update fails, Firebase may require a fresh sign-in before changing it.',
-                      style: TextStyle(color: mutedColor, height: 1.5),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -205,8 +226,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
+    final bytes = await image.readAsBytes();
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _avatarSourcePath = image.path;
+      _avatarBytes = bytes;
       _removeAvatar = false;
     });
   }
@@ -215,8 +242,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_isSaving) {
       return;
     }
+    FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
     setState(() => _isSaving = true);
+    final requestedEmail = _emailController.text.trim();
+    final emailChanged =
+        requestedEmail.isNotEmpty && requestedEmail != widget.profile.email;
 
     try {
       await AppController.instance.updateProfile(
@@ -224,6 +258,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         email: _emailController.text,
         avatarSeed: _avatarSeed,
         avatarSourcePath: _avatarSourcePath,
+        avatarBytes: _avatarBytes,
         removeAvatar: _removeAvatar,
       );
 
@@ -231,27 +266,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
+      if (emailChanged) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(tr('Check your inbox to verify the new email.'))),
+        );
+      }
       Navigator.of(context).pop(true);
     } on FirebaseAuthException catch (error) {
       if (!mounted) {
         return;
       }
-      final message = error.code == 'requires-recent-login'
-          ? 'Please sign in again before changing your email.'
-          : (error.message ?? 'Unable to save profile.');
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+          .showSnackBar(SnackBar(content: Text(authErrorMessage(error))));
     } catch (_) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to save profile right now.')),
+        SnackBar(content: Text(tr('Unable to save profile right now.'))),
       );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
       }
     }
+  }
+
+  String? _validateName(String? value) {
+    if ((value ?? '').trim().isEmpty) {
+      return tr('Name is required.');
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) {
+      return tr('Email is required.');
+    }
+    if (!email.contains('@') || !email.contains('.')) {
+      return tr('Please enter a valid email address.');
+    }
+    return null;
   }
 }

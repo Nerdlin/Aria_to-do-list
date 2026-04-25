@@ -2,8 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../services/app_controller.dart';
+import '../utils/app_colors.dart';
+import '../services/subscription_service.dart';
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/translations.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -73,6 +77,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               focusHours: focusHours,
               streak: streak,
             );
+            final plan = SubscriptionService.instance.planForProfile(
+              AppController.instance.profile,
+            );
 
             return CustomScrollView(
               slivers: [
@@ -86,7 +93,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Analytics',
+                              tr('Analytics'),
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
@@ -95,7 +102,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              TaskMetrics.rangeLabel(_selectedRange),
+                              tr(TaskMetrics.rangeLabel(_selectedRange)),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.64),
@@ -149,18 +156,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         const SizedBox(height: 12),
                         _TrendCard(
                           title: _selectedRange == AnalyticsRange.week
-                              ? 'Productivity Trend'
-                              : 'Completion Trend',
-                          subtitle: TaskMetrics.rangeLabel(_selectedRange),
+                              ? tr('Productivity Trend')
+                              : tr('Completion Trend'),
+                          subtitle: tr(TaskMetrics.rangeLabel(_selectedRange)),
                           buckets: buckets,
                         ),
                         const SizedBox(height: 12),
-                        _CategoryBreakdownCard(
-                          total: rangeTasks.length,
-                          categories: categories,
-                        ),
-                        const SizedBox(height: 12),
-                        _AchievementsCard(achievements: achievements),
+                        if (plan.hasAdvancedAnalytics) ...[
+                          _CategoryBreakdownCard(
+                            total: rangeTasks.length,
+                            categories: categories,
+                          ),
+                          const SizedBox(height: 12),
+                          _AchievementsCard(achievements: achievements),
+                        ] else
+                          const _UpgradeAnalyticsCard(),
                         if (rangeTasks.isEmpty) ...[
                           const SizedBox(height: 12),
                           Container(
@@ -173,7 +183,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                               border: Border.all(color: theme.dividerColor),
                             ),
                             child: Text(
-                              'Analytics will fill up automatically as you add and complete tasks in this period.',
+                              tr('Analytics will fill up automatically as you add and complete tasks in this period.'),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface
                                     .withValues(alpha: 0.72),
@@ -201,15 +211,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
   String _scoreLabel(int score) {
     if (score >= 80) {
-      return 'Excellent';
+      return tr('Excellent');
     }
     if (score >= 60) {
-      return 'Strong';
+      return tr('Strong');
     }
     if (score >= 40) {
-      return 'Building momentum';
+      return tr('Building momentum');
     }
-    return 'Needs attention';
+    return tr('Needs attention');
   }
 
   List<_AchievementData> _buildAchievements({
@@ -347,7 +357,7 @@ class _ScoreCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PERFORMANCE SCORE',
+                  tr('PERFORMANCE SCORE'),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.66),
                     fontSize: 11,
@@ -373,7 +383,13 @@ class _ScoreCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${change >= 0 ? '+' : ''}$change% vs previous period',
+                    tr(
+                      '{sign}{change}% vs previous period',
+                      namedArgs: {
+                        'sign': change >= 0 ? '+' : '',
+                        'change': change.abs().toString(),
+                      },
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -409,7 +425,7 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final stats = [
       _StatTileData(
-        label: 'Productivity',
+        label: tr('Productivity'),
         value: '$score%',
         change: '${score >= 60 ? '+' : ''}$score',
         positive: score >= 60,
@@ -417,7 +433,7 @@ class _StatsGrid extends StatelessWidget {
         color: const Color(0xFF8B5CF6),
       ),
       _StatTileData(
-        label: 'Completed',
+        label: tr('Completed'),
         value: '$completed / $total',
         change: '${completed >= math.max(1, total ~/ 2) ? '+' : ''}$completed',
         positive: completed >= math.max(1, total ~/ 2),
@@ -425,7 +441,7 @@ class _StatsGrid extends StatelessWidget {
         color: const Color(0xFF10B981),
       ),
       _StatTileData(
-        label: 'Focus Hours',
+        label: tr('Focus Hours'),
         value: '${focusHours.toStringAsFixed(1)}h',
         change: focusHours >= 2 ? '+Focus' : 'Low',
         positive: focusHours >= 2,
@@ -433,7 +449,7 @@ class _StatsGrid extends StatelessWidget {
         color: const Color(0xFF60A5FA),
       ),
       _StatTileData(
-        label: 'Streak',
+        label: tr('Streak'),
         value: '$streak',
         change: streak >= 3 ? '+Hot' : 'Warm up',
         positive: streak >= 3,
@@ -639,8 +655,8 @@ class _CategoryBreakdownCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = categories.entries.isEmpty
-        ? const <MapEntry<String, int>>[
-            MapEntry<String, int>('No tasks yet', 0),
+        ? <MapEntry<String, int>>[
+            MapEntry<String, int>(tr('No tasks yet'), 0),
           ]
         : (categories.entries.toList()
           ..sort((first, second) => second.value.compareTo(first.value)));
@@ -655,13 +671,13 @@ class _CategoryBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Task Categories',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          Text(
+            tr('Task Categories'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
           ...items.map((entry) {
-            final color = _categoryColor(entry.key);
+            final color = AppColors.categoryColor(entry.key);
             final percentage =
                 total == 0 ? 0 : ((entry.value / total) * 100).round();
             return Padding(
@@ -683,7 +699,7 @@ class _CategoryBreakdownCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            entry.key,
+                            tr(entry.key),
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -716,23 +732,7 @@ class _CategoryBreakdownCard extends StatelessWidget {
     );
   }
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Personal':
-        return const Color(0xFF60A5FA);
-      case 'Health':
-        return const Color(0xFF10B981);
-      case 'Learning':
-        return const Color(0xFFF59E0B);
-      case 'Finance':
-        return const Color(0xFFEF4444);
-      case 'Creative':
-        return const Color(0xFFEC4899);
-      case 'Work':
-      default:
-        return const Color(0xFF8B5CF6);
-    }
-  }
+
 }
 
 class _AchievementsCard extends StatelessWidget {
@@ -744,20 +744,32 @@ class _AchievementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+        gradient: LinearGradient(
+          colors: isDark
+              ? const [Color(0xFF111827), Color(0xFF1E1B4B)]
+              : const [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
         ),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : Colors.transparent,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Achievements',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          Text(
+            tr('Achievements'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: titleColor,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -772,9 +784,17 @@ class _AchievementsCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: achievement.unlocked
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.55),
+                            ? (isDark ? const Color(0xFF172033) : Colors.white)
+                            : (isDark
+                                ? const Color(0xFF0F172A)
+                                    .withValues(alpha: 0.82)
+                                : Colors.white.withValues(alpha: 0.55)),
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF334155)
+                              : Colors.transparent,
+                        ),
                       ),
                       child: Column(
                         children: [
@@ -794,7 +814,9 @@ class _AchievementsCard extends StatelessWidget {
                               height: 1.35,
                               fontWeight: FontWeight.w700,
                               color: achievement.unlocked
-                                  ? const Color(0xFF475569)
+                                  ? (isDark
+                                      ? const Color(0xFFE2E8F0)
+                                      : const Color(0xFF475569))
                                   : const Color(0xFF94A3B8),
                             ),
                           ),
@@ -804,6 +826,65 @@ class _AchievementsCard extends StatelessWidget {
                   ),
                 )
                 .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpgradeAnalyticsCard extends StatelessWidget {
+  const _UpgradeAnalyticsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.workspace_premium_outlined,
+              color: Color(0xFF7C3AED),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('Advanced analytics'),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tr('Upgrade to Pro to unlock categories, achievements, and deeper reports.'),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pushNamed(context, '/subscription'),
+            child: Text(tr('Upgrade')),
           ),
         ],
       ),

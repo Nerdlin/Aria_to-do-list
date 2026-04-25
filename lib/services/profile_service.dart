@@ -1,9 +1,9 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_profile.dart';
@@ -19,6 +19,7 @@ class ProfileService {
   Future<UserProfile> ensureProfileForUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     final avatarPath = prefs.getString(_avatarKey(user.uid));
+    final avatarBytes = _avatarBytesFromPrefs(prefs, user.uid);
     final preferredLanguage = _normalizeLanguageCode(
       prefs.getString('language_code') ??
           PlatformDispatcher.instance.locale.languageCode,
@@ -29,6 +30,7 @@ class ProfileService {
       final profile = UserProfile.fallback(
         user,
         localAvatarPath: avatarPath,
+        localAvatarBytes: avatarBytes,
         languageCode: preferredLanguage,
       );
       await _userDoc(user.uid)
@@ -45,17 +47,22 @@ class ProfileService {
         'email': user.email ?? data['email'],
       },
       localAvatarPath: avatarPath,
+      localAvatarBytes: avatarBytes,
     );
 
-    await _userDoc(user.uid).set(
-      {
-        'displayName': hydrated.displayName,
-        'email': hydrated.email,
-        'avatarSeed': hydrated.avatarSeed,
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+    final profileRefresh = <String, dynamic>{
+      'displayName': hydrated.displayName,
+      'email': hydrated.email,
+      'planName': hydrated.planName,
+      'subscriptionStatus': hydrated.subscriptionStatus,
+      'avatarSeed': hydrated.avatarSeed,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (data['pendingEmail'] == user.email) {
+      profileRefresh['pendingEmail'] = FieldValue.delete();
+    }
+
+    await _userDoc(user.uid).set(profileRefresh, SetOptions(merge: true));
 
     return hydrated;
   }
@@ -71,6 +78,7 @@ class ProfileService {
         uid,
         snapshot.data() ?? <String, dynamic>{},
         localAvatarPath: prefs.getString(_avatarKey(uid)),
+        localAvatarBytes: _avatarBytesFromPrefs(prefs, uid),
       );
     });
   }
@@ -80,6 +88,7 @@ class ProfileService {
     required String email,
     required int avatarSeed,
     String? avatarSourcePath,
+    Uint8List? avatarBytes,
     bool removeAvatar = false,
   }) async {
     final user = _requireUser();
@@ -95,20 +104,26 @@ class ProfileService {
       await user.updateDisplayName(normalizedName);
     }
 
+    String? pendingEmail;
     if (normalizedEmail.isNotEmpty && normalizedEmail != (user.email ?? '')) {
       await user.verifyBeforeUpdateEmail(normalizedEmail);
+      pendingEmail = normalizedEmail;
+      normalizedEmail = user.email ?? normalizedEmail;
     }
 
     if (removeAvatar) {
       await _clearAvatar(user.uid);
+    } else if (avatarBytes != null && avatarBytes.isNotEmpty) {
+      await _persistAvatarBytes(user.uid, avatarBytes);
     } else if (avatarSourcePath != null && avatarSourcePath.trim().isNotEmpty) {
-      await _persistAvatar(user.uid, avatarSourcePath);
+      await _persistAvatarPath(user.uid, avatarSourcePath);
     }
 
     await _userDoc(user.uid).set(
       {
         'displayName': normalizedName,
         'email': normalizedEmail,
+        if (pendingEmail != null) 'pendingEmail': pendingEmail,
         'avatarSeed': avatarSeed,
         'updatedAt': FieldValue.serverTimestamp(),
       },
@@ -173,6 +188,41 @@ class ProfileService {
     await _clearAvatar(_requireUser().uid);
   }
 
+  Future<void> updateSubscription({
+    required String planName,
+    required String status,
+    required DateTime? startedAt,
+    required DateTime? renewsAt,
+    required String? receiptId,
+  }) async {
+    final user = _requireUser();
+    final document = <String, dynamic>{
+      'planName': planName,
+      'subscriptionStatus': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (startedAt == null) {
+      document['subscriptionStartedAt'] = FieldValue.delete();
+    } else {
+      document['subscriptionStartedAt'] = Timestamp.fromDate(startedAt);
+    }
+
+    if (renewsAt == null) {
+      document['subscriptionRenewsAt'] = FieldValue.delete();
+    } else {
+      document['subscriptionRenewsAt'] = Timestamp.fromDate(renewsAt);
+    }
+
+    if (receiptId == null) {
+      document['subscriptionReceiptId'] = FieldValue.delete();
+    } else {
+      document['subscriptionReceiptId'] = receiptId;
+    }
+
+    await _userDoc(user.uid).set(document, SetOptions(merge: true));
+  }
+
   User _requireUser() {
     final user = _auth.currentUser;
     if (user == null) {
@@ -181,46 +231,41 @@ class ProfileService {
     return user;
   }
 
-  Future<void> _persistAvatar(String uid, String sourcePath) async {
+  Future<void> _persistAvatarBytes(String uid, Uint8List bytes) async {
     final prefs = await SharedPreferences.getInstance();
-    final directory = await getApplicationDocumentsDirectory();
-    final extension = _extensionForPath(sourcePath);
-    final savedPath =
-        '${directory.path}${Platform.pathSeparator}avatar_$uid$extension';
-    final sourceFile = File(sourcePath);
-    final targetFile = File(savedPath);
+    await prefs.setString(_avatarBytesKey(uid), base64Encode(bytes));
+    await prefs.remove(_avatarKey(uid));
+  }
 
-    if (await targetFile.exists()) {
-      await targetFile.delete();
-    }
-
-    await sourceFile.copy(savedPath);
-    await prefs.setString(_avatarKey(uid), savedPath);
+  Future<void> _persistAvatarPath(String uid, String sourcePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarKey(uid), sourcePath);
+    await prefs.remove(_avatarBytesKey(uid));
   }
 
   Future<void> _clearAvatar(String uid) async {
     final prefs = await SharedPreferences.getInstance();
-    final existingPath = prefs.getString(_avatarKey(uid));
-    if (existingPath != null && existingPath.isNotEmpty) {
-      final file = File(existingPath);
-      if (await file.exists()) {
-        await file.delete();
-      }
-    }
     await prefs.remove(_avatarKey(uid));
+    await prefs.remove(_avatarBytesKey(uid));
   }
 
   String _avatarKey(String uid) => 'avatar_path_$uid';
+  String _avatarBytesKey(String uid) => 'avatar_bytes_$uid';
+
+  Uint8List? _avatarBytesFromPrefs(SharedPreferences prefs, String uid) {
+    final encoded = prefs.getString(_avatarBytesKey(uid));
+    if (encoded == null || encoded.isEmpty) {
+      return null;
+    }
+
+    try {
+      return Uint8List.fromList(base64Decode(encoded));
+    } catch (_) {
+      return null;
+    }
+  }
 
   String _normalizeLanguageCode(String value) {
     return value.toLowerCase().startsWith('ru') ? 'ru' : 'en';
-  }
-
-  String _extensionForPath(String path) {
-    final dotIndex = path.lastIndexOf('.');
-    if (dotIndex == -1) {
-      return '.jpg';
-    }
-    return path.substring(dotIndex);
   }
 }

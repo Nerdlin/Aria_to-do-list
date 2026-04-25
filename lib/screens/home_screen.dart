@@ -3,9 +3,12 @@ import 'package:intl/intl.dart';
 
 import '../models/user_profile.dart';
 import '../services/app_controller.dart';
+import '../services/notification_service.dart';
 import '../services/task_metrics.dart';
 import '../services/task_service.dart';
+import '../utils/app_colors.dart';
 import '../utils/translations.dart';
+import '../widgets/focus_timer_sheet.dart';
 import '../widgets/profile_avatar.dart';
 import 'edit_profile_screen.dart';
 import 'tasks_screen.dart';
@@ -63,6 +66,14 @@ class HomeScreen extends StatelessWidget {
                   )
                 : tr(
                     'Turn on AI Auto-Planning in Settings to get live suggestions for your day.');
+            final notifications = AppNotificationService.buildNotifications(
+              tasks: tasks,
+              profile: profile,
+            );
+            final activeNotificationCount = notifications
+                .where((notification) =>
+                    notification.body != tr('Your inbox is clear.'))
+                .length;
 
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -75,10 +86,10 @@ class HomeScreen extends StatelessWidget {
                         _HomeHeader(
                           profile: profile,
                           insight: insight,
+                          notificationCount: activeNotificationCount,
                           onNotificationsTap: () => _showNotificationsSheet(
                             context,
-                            todayTasks: todayTasks,
-                            pendingTasks: pendingTasks,
+                            notifications: notifications,
                           ),
                           onProfileTap: () =>
                               _openProfileEditor(context, profile),
@@ -224,22 +235,12 @@ class HomeScreen extends StatelessWidget {
                         enabled: profile?.focusMode ?? false,
                         nextTask:
                             priorityTasks.isEmpty ? null : priorityTasks.first,
-                        onTap: () async {
-                          final nextValue = !(profile?.focusMode ?? false);
-                          await AppController.instance.updatePreferences(
-                            focusMode: nextValue,
-                          );
-                          if (!context.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                nextValue
-                                    ? tr('Focus mode enabled.')
-                                    : tr('Focus mode turned off.'),
-                              ),
-                            ),
+                        onTap: () {
+                          FocusTimerSheet.show(
+                            context,
+                            task: priorityTasks.isEmpty
+                                ? null
+                                : priorityTasks.first,
                           );
                         },
                       ),
@@ -283,25 +284,8 @@ class HomeScreen extends StatelessWidget {
 
   static void _showNotificationsSheet(
     BuildContext context, {
-    required List<TaskItem> todayTasks,
-    required List<TaskItem> pendingTasks,
+    required List<AppNotification> notifications,
   }) {
-    final upcomingToday =
-        todayTasks.where((task) => !task.isCompleted).toList();
-    final notifications = <String>[
-      if (upcomingToday.isNotEmpty)
-        tr('You still have {count} task(s) planned for today.',
-            namedArgs: {'count': upcomingToday.length.toString()}),
-      if (pendingTasks.isNotEmpty)
-        tr('Highest priority: {title}.',
-            namedArgs: {'title': pendingTasks.first.title}),
-      if (todayTasks.where((task) => task.isCompleted).isNotEmpty)
-        tr('Nice work, you already completed {count} today.', namedArgs: {
-          'count':
-              todayTasks.where((task) => task.isCompleted).length.toString()
-        }),
-    ];
-
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -309,10 +293,6 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) {
-        final items = notifications.isEmpty
-            ? <String>[tr('No alerts right now. Your inbox is clear.')]
-            : notifications;
-
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           child: Column(
@@ -325,7 +305,7 @@ class HomeScreen extends StatelessWidget {
                     const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
-              ...items.map(
+              ...notifications.map(
                 (item) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Container(
@@ -339,12 +319,26 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.notifications_active_outlined,
-                          color: Color(0xFF7C3AED),
+                        Icon(
+                          item.icon,
+                          color: item.color,
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(item)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(item.body),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -389,29 +383,34 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.profile,
     required this.insight,
+    required this.notificationCount,
     required this.onNotificationsTap,
     required this.onProfileTap,
   });
 
   final UserProfile? profile;
   final String insight;
+  final int notificationCount;
   final VoidCallback onNotificationsTap;
   final VoidCallback onProfileTap;
 
   @override
   Widget build(BuildContext context) {
     final name = profile?.displayName ?? tr('Aria User');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 56, 20, 106),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF6F32FF), Color(0xFF8B5CF6)],
+          colors: isDark
+              ? const [Color(0xFF1E1B4B), Color(0xFF312E81)]
+              : const [Color(0xFF6F32FF), Color(0xFF8B5CF6)],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(34)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(34)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,19 +465,46 @@ class _HomeHeader extends StatelessWidget {
                   InkWell(
                     onTap: onNotificationsTap,
                     borderRadius: BorderRadius.circular(22),
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.24)),
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.white,
-                      ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.24)),
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (notificationCount > 0)
+                          Positioned(
+                            right: -2,
+                            top: -2,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10B981),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                notificationCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -489,6 +515,7 @@ class _HomeHeader extends StatelessWidget {
                       displayName: name,
                       avatarSeed: profile?.avatarSeed ?? 0,
                       imagePath: profile?.localAvatarPath,
+                      imageBytes: profile?.localAvatarBytes,
                       size: 46,
                       fontSize: 20,
                       borderRadius: 18,
@@ -730,7 +757,7 @@ class _ScheduleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accentColor = _categoryColor(task.category);
+    final accentColor = AppColors.categoryColor(task.category);
 
     return InkWell(
       onTap: onTap,
@@ -836,23 +863,7 @@ class _ScheduleCard extends StatelessWidget {
     );
   }
 
-  Color _categoryColor(String category) {
-    switch (category) {
-      case 'Personal':
-        return const Color(0xFF3B82F6);
-      case 'Health':
-        return const Color(0xFF10B981);
-      case 'Learning':
-        return const Color(0xFFF59E0B);
-      case 'Finance':
-        return const Color(0xFFEF4444);
-      case 'Creative':
-        return const Color(0xFFEC4899);
-      case 'Work':
-      default:
-        return const Color(0xFF7C3AED);
-    }
-  }
+
 }
 
 class _PriorityTaskCard extends StatelessWidget {
@@ -868,7 +879,7 @@ class _PriorityTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final priorityColor = _priorityColor(task.priority);
+    final priorityColor = AppColors.priorityColor(task.priority);
 
     return InkWell(
       onTap: onTap,
@@ -927,17 +938,7 @@ class _PriorityTaskCard extends StatelessWidget {
     );
   }
 
-  Color _priorityColor(String priority) {
-    switch (priority) {
-      case 'Low':
-        return const Color(0xFF10B981);
-      case 'Medium':
-        return const Color(0xFFF59E0B);
-      case 'High':
-      default:
-        return const Color(0xFFEF4444);
-    }
-  }
+
 }
 
 class _WeeklyProgressCard extends StatelessWidget {
@@ -1118,7 +1119,9 @@ class _FocusModeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    enabled ? 'Focus mode is active' : 'Start focus mode',
+                    enabled
+                        ? tr('Focus mode is active')
+                        : tr('Start focus mode'),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.82),
                       fontSize: 13,
@@ -1128,8 +1131,12 @@ class _FocusModeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     nextTask == null
-                        ? 'Use a 25-minute session to protect your best work.'
-                        : 'Next target: ${nextTask!.title}',
+                        ? tr(
+                            'Use a 25-minute session to protect your best work.')
+                        : tr(
+                            'Next target: {title}',
+                            namedArgs: {'title': nextTask!.title},
+                          ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

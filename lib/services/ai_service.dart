@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import 'app_controller.dart';
+import 'subscription_service.dart';
 import 'task_service.dart';
 
 class AiService {
@@ -51,18 +52,23 @@ class AiService {
     return _groqUrl;
   }
 
-  String get _model {
+  bool get isConfigured {
+    final apiUrl = _apiUrl;
+    return _apiKey.isNotEmpty || _allowsUnauthenticatedEndpoint(apiUrl);
+  }
+
+  String _modelFor(String apiUrl) {
     final customModel = dotenv.env['AI_MODEL'];
     if (customModel != null && customModel.trim().isNotEmpty) {
       return customModel.trim();
     }
 
-    if (_apiUrl.contains('localhost:20128') ||
-        _apiUrl.contains('127.0.0.1:20128')) {
+    if (apiUrl.contains('localhost:20128') ||
+        apiUrl.contains('127.0.0.1:20128')) {
       return 'kr/claude-sonnet-4.5';
     }
 
-    return _apiUrl == _openRouterUrl
+    return apiUrl == _openRouterUrl
         ? 'nvidia/nemotron-3-super-120b-a12b:free'
         : 'llama-3.3-70b-versatile';
   }
@@ -77,6 +83,11 @@ class AiService {
     required DateTime dueDate,
     String? note,
   }) async {
+    final limitMessage = await _consumeAiOrLimitMessage();
+    if (limitMessage != null) {
+      return limitMessage;
+    }
+
     try {
       final prompt = '''
 Analyze this task and provide priority recommendation:
@@ -102,6 +113,11 @@ Provide a brief analysis on:
   }
 
   Future<String> suggestTaskBreakdown(String taskTitle) async {
+    final limitMessage = await _consumeAiOrLimitMessage();
+    if (limitMessage != null) {
+      return limitMessage;
+    }
+
     try {
       final prompt = '''
 Break down this task into 3-5 actionable subtasks:
@@ -126,6 +142,11 @@ Keep each step clear and actionable.
       return _isRussian
           ? 'Добавьте несколько задач, чтобы получить персональные инсайты.'
           : 'Add some tasks to get personalized insights!';
+    }
+
+    final limitMessage = await _consumeAiOrLimitMessage();
+    if (limitMessage != null) {
+      return limitMessage;
     }
 
     try {
@@ -166,6 +187,11 @@ Provide brief, motivating insights about:
           : 'No pending tasks to schedule!';
     }
 
+    final limitMessage = await _consumeAiOrLimitMessage();
+    if (limitMessage != null) {
+      return limitMessage;
+    }
+
     try {
       final taskList = pendingTasks
           .take(5)
@@ -193,27 +219,47 @@ Provide a brief schedule recommendation with reasoning.
     }
   }
 
+  Future<String?> _consumeAiOrLimitMessage() async {
+    final gate = await SubscriptionService.instance.consumeAiRequest(
+      AppController.instance.profile,
+    );
+    if (gate.allowed) {
+      return null;
+    }
+
+    final plan = gate.namedArgs['plan'] ?? 'Free';
+    return _isRussian
+        ? 'Дневной лимит ИИ для плана $plan исчерпан. Улучшите подписку или попробуйте завтра.'
+        : 'AI daily limit reached for $plan. Upgrade or try again tomorrow.';
+  }
+
   Future<String> _makeRequest(String prompt) async {
+    final apiUrl = _apiUrl;
+    final apiKey = _apiKey;
+
+    if (apiKey.isEmpty && !_allowsUnauthenticatedEndpoint(apiUrl)) {
+      throw StateError('AI API key is not configured');
+    }
+
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
 
-    final apiKey = _apiKey;
     if (apiKey.isNotEmpty) {
       headers['Authorization'] = 'Bearer $apiKey';
     }
 
-    if (_apiUrl.contains('openrouter.ai')) {
+    if (apiUrl.contains('openrouter.ai')) {
       headers['HTTP-Referer'] = 'https://github.com/aria-app';
       headers['X-Title'] = 'Aria Productivity App';
     }
 
     final response = await http
         .post(
-          Uri.parse(_apiUrl),
+          Uri.parse(apiUrl),
           headers: headers,
           body: jsonEncode({
-            'model': _model,
+            'model': _modelFor(apiUrl),
             'messages': [
               {
                 'role': 'system',
@@ -340,6 +386,11 @@ Provide a brief schedule recommendation with reasoning.
     return trimmed.isNotEmpty &&
         trimmed != 'demo_key' &&
         trimmed != 'your_openrouter_api_key_here';
+  }
+
+  bool _allowsUnauthenticatedEndpoint(String apiUrl) {
+    final host = Uri.tryParse(apiUrl)?.host;
+    return host == 'localhost' || host == '127.0.0.1' || host == '::1';
   }
 
   String _shortBody(String body) {

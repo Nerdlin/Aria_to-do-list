@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/ai_service.dart';
+import '../services/app_controller.dart';
+import '../services/subscription_service.dart';
 import '../services/task_service.dart';
 import '../utils/translations.dart';
 
@@ -62,30 +64,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _ModeChip(
-                      label: tr('Insights'),
-                      icon: Icons.lightbulb_outline,
-                      selected: _selectedMode == 'insights',
-                      onTap: () => setState(() => _selectedMode = 'insights'),
-                    ),
-                    _ModeChip(
-                      label: tr('Schedule'),
-                      icon: Icons.calendar_today,
-                      selected: _selectedMode == 'schedule',
-                      onTap: () => setState(() => _selectedMode = 'schedule'),
-                    ),
-                    _ModeChip(
-                      label: tr('Breakdown'),
-                      icon: Icons.list_alt,
-                      selected: _selectedMode == 'breakdown',
-                      onTap: () => setState(() => _selectedMode = 'breakdown'),
-                    ),
-                  ],
-                ),
+              child: _ModeSelector(
+                selectedMode: _selectedMode,
+                onChanged: (mode) => setState(() => _selectedMode = mode),
               ),
             ),
             const SizedBox(height: 16),
@@ -94,6 +75,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                 child: Column(
                   children: [
+                    _buildAiStatusCard(isDark, theme),
+                    const SizedBox(height: 16),
                     if (_response != null)
                       Container(
                         width: double.infinity,
@@ -241,6 +224,80 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     );
   }
 
+  Widget _buildAiStatusCard(bool isDark, ThemeData theme) {
+    final profile = AppController.instance.profile;
+    final plan = SubscriptionService.instance.planForProfile(profile);
+
+    return FutureBuilder<AiUsageSnapshot>(
+      future: SubscriptionService.instance.getAiUsage(profile),
+      builder: (context, snapshot) {
+        final usage = snapshot.data;
+        final remaining = usage?.remainingToday ?? plan.aiDailyLimit;
+        final configured = _aiService.isConfigured;
+        final statusColor =
+            configured ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF111827) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  configured
+                      ? Icons.cloud_done_outlined
+                      : Icons.offline_bolt_outlined,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      configured ? tr('AI online') : tr('AI fallback mode'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tr(
+                        '{plan}: {left}/{limit} AI requests left today',
+                        namedArgs: {
+                          'plan': plan.name,
+                          'left': remaining.toString(),
+                          'limit': plan.aiDailyLimit.toString(),
+                        },
+                      ),
+                      style: TextStyle(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildFeatureCards(bool isDark, ThemeData theme) {
     return Column(
       children: [
@@ -283,6 +340,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     try {
       final tasks = await _taskService.getTasksStream().first;
       final insights = await _aiService.generateProductivityInsights(tasks);
+      if (!mounted) return;
       setState(() => _response = insights);
     } catch (e) {
       _showError(tr('Failed to generate insights'));
@@ -302,6 +360,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       final tasks = await _taskService.getTasksStream().first;
       final pending = tasks.where((t) => !t.isCompleted).toList();
       final schedule = await _aiService.suggestOptimalSchedule(pending);
+      if (!mounted) return;
       setState(() => _response = schedule);
     } catch (e) {
       _showError(tr('Failed to generate schedule'));
@@ -321,6 +380,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     try {
       final breakdown = await _aiService.suggestTaskBreakdown(title);
+      if (!mounted) return;
       setState(() => _response = breakdown);
       _inputController.clear();
     } catch (e) {
@@ -338,8 +398,54 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 }
 
-class _ModeChip extends StatelessWidget {
-  const _ModeChip({
+class _ModeSelector extends StatelessWidget {
+  const _ModeSelector({
+    required this.selectedMode,
+    required this.onChanged,
+  });
+
+  final String selectedMode;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Row(
+        children: [
+          _ModeButton(
+            label: tr('Insights'),
+            icon: Icons.lightbulb_outline,
+            selected: selectedMode == 'insights',
+            onTap: () => onChanged('insights'),
+          ),
+          _ModeButton(
+            label: tr('Plan'),
+            icon: Icons.calendar_today,
+            selected: selectedMode == 'schedule',
+            onTap: () => onChanged('schedule'),
+          ),
+          _ModeButton(
+            label: tr('Steps'),
+            icon: Icons.list_alt,
+            selected: selectedMode == 'breakdown',
+            onTap: () => onChanged('breakdown'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeButton extends StatelessWidget {
+  const _ModeButton({
     required this.label,
     required this.icon,
     required this.selected,
@@ -353,45 +459,38 @@ class _ModeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
+    final color = selected
+        ? Colors.white
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.68);
+
+    return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 46,
           decoration: BoxDecoration(
             gradient: selected
                 ? const LinearGradient(
                     colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
                   )
                 : null,
-            color: selected ? null : Theme.of(context).dividerColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: selected
-                    ? Colors.white
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.6),
-              ),
-              const SizedBox(width: 6),
+              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 2),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: selected
-                      ? Colors.white
-                      : Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: color,
                 ),
               ),
             ],

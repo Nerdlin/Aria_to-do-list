@@ -13,6 +13,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function taskBelongsToSignedInUser(data) {
+      return isSignedIn() && data.userId == request.auth.uid;
+    }
+
     // Правила для пользователей
     match /users/{userId} {
       // Чтение: только свой профиль
@@ -28,13 +32,14 @@ service cloud.firestore {
     // Правила для задач (tasks)
     match /tasks/{taskId} {
       // Чтение: только свои задачи
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if taskBelongsToSignedInUser(resource.data);
       // Создание: только со своим userId
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if taskBelongsToSignedInUser(request.resource.data);
       // Обновление: только свои задачи
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if taskBelongsToSignedInUser(resource.data)
+        && taskBelongsToSignedInUser(request.resource.data);
       // Удаление: только свои задачи
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if taskBelongsToSignedInUser(resource.data);
     }
 
     // Правила для категорий (categories)

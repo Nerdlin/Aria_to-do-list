@@ -9,14 +9,16 @@ import 'screens/auth_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/registration_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/subscription_screen.dart';
 import 'services/app_controller.dart';
 import 'widgets/app_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Keep local AI config optional so fresh checkouts still boot with
+  // deterministic fallback recommendations.
+  await dotenv.load(fileName: ".env", isOptional: true);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppController.instance.init();
@@ -54,6 +56,7 @@ class AriaApp extends StatelessWidget {
             '/register': (_) => const RegistrationScreen(),
             '/shell': (_) => const AppShell(),
             '/add-task': (_) => const AddTaskScreen(),
+            '/subscription': (_) => const SubscriptionScreen(),
           },
         );
       },

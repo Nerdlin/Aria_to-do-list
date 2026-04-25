@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,6 +64,7 @@ class AppController extends ChangeNotifier {
     required String email,
     required int avatarSeed,
     String? avatarSourcePath,
+    Uint8List? avatarBytes,
     bool removeAvatar = false,
   }) async {
     final existing = _profile;
@@ -70,13 +72,21 @@ class AppController extends ChangeNotifier {
       return;
     }
 
+    final requestedEmail = email.trim();
+    final isEmailChange =
+        requestedEmail.isNotEmpty && requestedEmail != existing.email;
+
     _profile = existing.copyWith(
       displayName: displayName.trim().isEmpty
           ? existing.displayName
           : displayName.trim(),
-      email: email.trim().isEmpty ? existing.email : email.trim(),
+      email: isEmailChange || requestedEmail.isEmpty
+          ? existing.email
+          : requestedEmail,
       avatarSeed: avatarSeed,
+      localAvatarBytes: avatarBytes,
       clearAvatarPath: removeAvatar,
+      clearAvatarBytes: removeAvatar,
     );
     notifyListeners();
 
@@ -85,6 +95,7 @@ class AppController extends ChangeNotifier {
       email: email,
       avatarSeed: avatarSeed,
       avatarSourcePath: avatarSourcePath,
+      avatarBytes: avatarBytes,
       removeAvatar: removeAvatar,
     );
 
@@ -165,6 +176,41 @@ class AppController extends ChangeNotifier {
     await refreshProfile();
   }
 
+  Future<void> updateSubscription(String planName) async {
+    final existing = _profile;
+    if (existing == null) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final normalizedPlan = _normalizePlanName(planName);
+    final isFree = normalizedPlan == 'Free';
+    final startedAt = isFree ? null : now;
+    final renewsAt = isFree ? null : DateTime(now.year, now.month + 1, now.day);
+    final receiptId = isFree
+        ? null
+        : 'aria-${normalizedPlan.toLowerCase()}-${now.millisecondsSinceEpoch}';
+    final status = isFree ? 'free' : 'active';
+
+    _profile = existing.copyWith(
+      planName: normalizedPlan,
+      subscriptionStatus: status,
+      subscriptionStartedAt: startedAt,
+      subscriptionRenewsAt: renewsAt,
+      subscriptionReceiptId: receiptId,
+      clearSubscriptionDates: isFree,
+    );
+    notifyListeners();
+
+    await _profiles.updateSubscription(
+      planName: normalizedPlan,
+      status: status,
+      startedAt: startedAt,
+      renewsAt: renewsAt,
+      receiptId: receiptId,
+    );
+  }
+
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
   }
@@ -218,6 +264,18 @@ class AppController extends ChangeNotifier {
       case 'light':
       default:
         return ThemeMode.light;
+    }
+  }
+
+  String _normalizePlanName(String name) {
+    switch (name.toLowerCase()) {
+      case 'business':
+        return 'Business';
+      case 'pro':
+        return 'Pro';
+      case 'free':
+      default:
+        return 'Free';
     }
   }
 

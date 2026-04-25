@@ -1,7 +1,7 @@
 name: aria_productivity_app
 description: MVP Flutter app generated from Figma Make flow
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -14,13 +14,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^3.5.0
   firebase_auth: ^5.3.0
-  cloud_firestore: any
-  intl: any
+  cloud_firestore: ^5.6.12
+  intl: ^0.20.2
   image_picker: ^1.1.2
-  path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   http: ^1.2.0
   flutter_dotenv: ^5.1.0
+  package_info_plus: ^10.1.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

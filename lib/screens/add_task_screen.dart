@@ -4,17 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../services/ai_service.dart';
+import '../services/app_controller.dart';
+import '../services/subscription_service.dart';
 import '../services/task_service.dart';
 import '../utils/translations.dart';
 
 class AddTaskScreen extends StatefulWidget {
-  const AddTaskScreen({super.key});
+  const AddTaskScreen({super.key, this.existingTask});
+
+  final TaskItem? existingTask;
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
+  TaskItem? get _existingTask =>
+      widget.existingTask ??
+      (ModalRoute.of(context)?.settings.arguments as TaskItem?);
+
+  bool get _isEditing => _existingTask != null;
+  bool _didPrefill = false;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TaskService _taskService = TaskService();
@@ -77,6 +87,36 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     super.initState();
     _suggestions = _buildSuggestions();
     _titleController.addListener(_handleTitleChanged);
+
+    // Pre-fill if we received an existing task via the constructor.
+    final task = widget.existingTask;
+    if (task != null) {
+      _prefillFrom(task);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pre-fill if we received an existing task via route arguments.
+    if (!_didPrefill) {
+      final routeTask =
+          ModalRoute.of(context)?.settings.arguments as TaskItem?;
+      if (routeTask != null && widget.existingTask == null) {
+        _prefillFrom(routeTask);
+      }
+      _didPrefill = true;
+    }
+  }
+
+  void _prefillFrom(TaskItem task) {
+    _titleController.text = task.title;
+    _noteController.text = task.note;
+    _selectedCategory = task.category;
+    _selectedPriority = task.priority;
+    _selectedDuration = task.durationMinutes;
+    _isAiPick = task.isAiPick;
+    _selectedDate = task.date;
   }
 
   @override
@@ -105,7 +145,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          tr('New Task'),
+          _isEditing ? tr('Edit Task') : tr('New Task'),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         leading: IconButton(
@@ -494,15 +534,56 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _taskService.addTask(
-        title: _titleController.text.trim(),
-        priority: _selectedPriority,
-        category: _selectedCategory,
-        date: _selectedDate,
-        durationMinutes: _selectedDuration,
-        note: _noteController.text.trim(),
-        isAiPick: _isAiPick,
-      );
+      final existingTask = _existingTask;
+
+      if (existingTask != null) {
+        // ── Edit mode ──
+        await _taskService.updateTask(
+          existingTask.id,
+          title: _titleController.text.trim(),
+          priority: _selectedPriority,
+          category: _selectedCategory,
+          date: _selectedDate,
+          durationMinutes: _selectedDuration,
+          note: _noteController.text.trim(),
+          isAiPick: _isAiPick,
+        );
+      } else {
+        // ── Create mode — apply plan gate ──
+        final tasks = await _taskService.getTasksOnce();
+        final activeTaskCount =
+            tasks.where((task) => !task.isCompleted).length;
+        final gate = SubscriptionService.instance.canCreateTask(
+          AppController.instance.profile,
+          activeTaskCount,
+        );
+        if (!gate.allowed) {
+          if (!mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tr(gate.messageKey, namedArgs: gate.namedArgs)),
+              action: SnackBarAction(
+                label: tr('Upgrade'),
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/subscription'),
+              ),
+            ),
+          );
+          return;
+        }
+
+        await _taskService.addTask(
+          title: _titleController.text.trim(),
+          priority: _selectedPriority,
+          category: _selectedCategory,
+          date: _selectedDate,
+          durationMinutes: _selectedDuration,
+          note: _noteController.text.trim(),
+          isAiPick: _isAiPick,
+        );
+      }
 
       if (!mounted) {
         return;
