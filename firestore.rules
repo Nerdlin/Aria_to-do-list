@@ -66,6 +66,12 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
     }
 
+    // Public read-only app configuration for update checks
+    match /config/{documentId} {
+      allow get: if documentId == 'app_version';
+      allow list, write: if false;
+    }
+
     // Запретить доступ ко всем остальным коллекциям
     match /{document=**} {
       allow read, write: if false;

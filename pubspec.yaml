@@ -1,7 +1,7 @@
 name: aria_productivity_app
 description: MVP Flutter app generated from Figma Make flow
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.3+3
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -30,5 +30,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - .env

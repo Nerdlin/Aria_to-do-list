@@ -10,10 +10,19 @@ class UpdateService {
 
   static final UpdateService instance = UpdateService._();
 
-  Future<void> checkForUpdates(BuildContext context) async {
+  bool _checkedThisSession = false;
+
+  Future<void> checkForUpdates(
+    BuildContext context, {
+    bool force = false,
+  }) async {
+    if (_checkedThisSession && !force) {
+      return;
+    }
+    _checkedThisSession = true;
+
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      final currentVersion = packageInfo.version;
 
       final doc = await FirebaseFirestore.instance
           .collection('config')
@@ -24,42 +33,60 @@ class UpdateService {
 
       final data = doc.data()!;
       final latestVersion = data['latestVersion'] as String?;
+      final latestBuildNumber = data['latestBuildNumber']?.toString() ??
+          data['latestBuild']?.toString();
       final downloadUrl = data['downloadUrl'] as String?;
       final isMandatory = data['isMandatory'] as bool? ?? false;
       final releaseNotes = data['releaseNotes'] as String?;
 
       if (latestVersion != null &&
           downloadUrl != null &&
-          _isNewerVersion(currentVersion, latestVersion)) {
+          isNewerVersion(
+            currentVersion: packageInfo.version,
+            currentBuildNumber: packageInfo.buildNumber,
+            latestVersion: latestVersion,
+            latestBuildNumber: latestBuildNumber,
+          )) {
         _showUpdateDialog(
           context,
-          latestVersion: latestVersion,
+          latestVersion: _displayVersion(latestVersion, latestBuildNumber),
           downloadUrl: downloadUrl,
           isMandatory: isMandatory,
           releaseNotes: releaseNotes,
         );
       }
     } catch (e) {
+      _checkedThisSession = false;
       debugPrint('Error checking for updates: $e');
     }
   }
 
-  bool _isNewerVersion(String current, String latest) {
-    try {
-      final currentParts = current.split('.').map(int.parse).toList();
-      final latestParts = latest.split('.').map(int.parse).toList();
+  bool isNewerVersion({
+    required String currentVersion,
+    String? currentBuildNumber,
+    required String latestVersion,
+    String? latestBuildNumber,
+  }) {
+    final current = _AppVersion.parse(
+      currentVersion,
+      buildNumber: currentBuildNumber,
+    );
+    final latest = _AppVersion.parse(
+      latestVersion,
+      buildNumber: latestBuildNumber,
+    );
 
-      for (var i = 0; i < 3; i++) {
-        final c = i < currentParts.length ? currentParts[i] : 0;
-        final l = i < latestParts.length ? latestParts[i] : 0;
+    return latest.compareTo(current) > 0;
+  }
 
-        if (l > c) return true;
-        if (l < c) return false;
-      }
-      return false;
-    } catch (_) {
-      return current != latest;
+  String _displayVersion(String version, String? buildNumber) {
+    if (buildNumber == null || buildNumber.trim().isEmpty) {
+      return version;
     }
+    if (version.contains('+')) {
+      return version;
+    }
+    return '$version+$buildNumber';
   }
 
   void _showUpdateDialog(
@@ -118,5 +145,57 @@ class UpdateService {
         );
       },
     );
+  }
+}
+
+class _AppVersion implements Comparable<_AppVersion> {
+  const _AppVersion({
+    required this.major,
+    required this.minor,
+    required this.patch,
+    required this.build,
+    required this.raw,
+  });
+
+  final int major;
+  final int minor;
+  final int patch;
+  final int build;
+  final String raw;
+
+  factory _AppVersion.parse(String value, {String? buildNumber}) {
+    final trimmed = value.trim();
+    final versionAndBuild = trimmed.split('+');
+    final versionParts = versionAndBuild.first.split('.');
+    final inlineBuild = versionAndBuild.length > 1 ? versionAndBuild[1] : null;
+
+    return _AppVersion(
+      major: _part(versionParts, 0),
+      minor: _part(versionParts, 1),
+      patch: _part(versionParts, 2),
+      build: int.tryParse((buildNumber ?? inlineBuild ?? '').trim()) ?? 0,
+      raw: trimmed,
+    );
+  }
+
+  static int _part(List<String> parts, int index) {
+    if (index >= parts.length) {
+      return 0;
+    }
+    return int.tryParse(parts[index].trim()) ?? 0;
+  }
+
+  @override
+  int compareTo(_AppVersion other) {
+    final current = [major, minor, patch, build];
+    final previous = [other.major, other.minor, other.patch, other.build];
+
+    for (var index = 0; index < current.length; index++) {
+      final comparison = current[index].compareTo(previous[index]);
+      if (comparison != 0) {
+        return comparison;
+      }
+    }
+    return raw.compareTo(other.raw);
   }
 }

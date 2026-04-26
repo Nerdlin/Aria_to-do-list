@@ -14,7 +14,7 @@ class AuthService {
       return result.user;
     } on FirebaseAuthException catch (error) {
       if (kDebugMode) {
-        print('Error during sign in: ${error.message}');
+        debugPrint('Error during sign in: ${error.message}');
       }
       rethrow;
     }
@@ -38,7 +38,7 @@ class AuthService {
       return result.user;
     } on FirebaseAuthException catch (error) {
       if (kDebugMode) {
-        print('Error during registration: ${error.message}');
+        debugPrint('Error during registration: ${error.message}');
       }
       rethrow;
     }
@@ -49,7 +49,7 @@ class AuthService {
       await _auth.signOut();
     } catch (error) {
       if (kDebugMode) {
-        print('Error during sign out: $error');
+        debugPrint('Error during sign out: $error');
       }
     }
   }
@@ -59,7 +59,7 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (error) {
       if (kDebugMode) {
-        print('Error during password reset: ${error.message}');
+        debugPrint('Error during password reset: ${error.message}');
       }
       rethrow;
     }

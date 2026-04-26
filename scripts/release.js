@@ -41,8 +41,8 @@ async function run() {
   
   console.log(`Текущая версия: ${currentVersion}+${currentBuild}`);
 
-  // Спрашиваем данные для релиза
-  const response = await prompts([
+  // 1. Сначала спрашиваем базовые данные
+  const initialInfo = await prompts([
     {
       type: 'text',
       name: 'newVersion',
@@ -51,14 +51,9 @@ async function run() {
     },
     {
       type: 'text',
-      name: 'downloadUrl',
-      message: 'Ссылка на скачивание нового APK (Google Drive/Dropbox/т.д.):',
-      validate: value => value.startsWith('http') ? true : 'Нужна корректная http/https ссылка'
-    },
-    {
-      type: 'text',
       name: 'releaseNotes',
-      message: 'Что нового в этой версии? (Опиши для пользователей):'
+      message: 'Что нового в этой версии? (Опиши для пользователей):',
+      initial: 'Улучшения производительности и исправления ошибок.'
     },
     {
       type: 'confirm',
@@ -68,37 +63,59 @@ async function run() {
     }
   ]);
 
-  if (!response.newVersion || !response.downloadUrl) {
+  if (!initialInfo.newVersion) {
     console.log('❌ Релиз отменен.');
     process.exit(0);
   }
 
   const newBuild = currentBuild + 1;
 
-  // Обновляем pubspec.yaml
+  // 2. Обновляем pubspec.yaml
   console.log('\n📝 Обновляем pubspec.yaml...');
-  pubspec = pubspec.replace(/version: \d+\.\d+\.\d+\+\d+/, `version: ${response.newVersion}+${newBuild}`);
+  pubspec = pubspec.replace(/version: \d+\.\d+\.\d+\+\d+/, `version: ${initialInfo.newVersion}+${newBuild}`);
   fs.writeFileSync(pubspecPath, pubspec);
-  console.log(`✅ Версия обновлена на ${response.newVersion}+${newBuild}`);
+  console.log(`✅ Версия обновлена на ${initialInfo.newVersion}+${newBuild}`);
 
-  // Собираем APK
+  // 3. Собираем APK
   console.log('\n📦 Собираем release APK (это займет пару минут)...');
   try {
     execSync('flutter build apk --release', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
-    console.log('✅ APK успешно собран!');
+    console.log('\n✅ APK успешно собран!');
+    console.log(`📍 Файл находится здесь: build/app/outputs/flutter-apk/app-release.apk`);
   } catch (e) {
     console.error('❌ Ошибка сборки APK:', e.message);
     process.exit(1);
   }
 
-  // Обновляем Firestore
+  // 4. ТЕПЕРЬ просим загрузить и дать ссылку
+  console.log('\n⬇️  ДЕЙСТВИЕ ТРЕБУЕТСЯ:');
+  console.log('1. Загрузите созданный APK файл в ваше облако (Google Диск и т.д.)');
+  console.log('2. Скопируйте прямую ссылку на файл.');
+  
+  const linkInfo = await prompts([
+    {
+      type: 'text',
+      name: 'downloadUrl',
+      message: 'Вставьте ссылку на скачивание APK:',
+      validate: value => value.startsWith('http') ? true : 'Нужна корректная http/https ссылка'
+    }
+  ]);
+
+  if (!linkInfo.downloadUrl) {
+    console.log('❌ Обновление базы отменено (но APK собран).');
+    process.exit(0);
+  }
+
+  // 5. Обновляем Firestore
   console.log('\n🔥 Обновляем конфигурацию в Firebase Firestore...');
   try {
     await db.collection('config').doc('app_version').set({
-      latestVersion: response.newVersion,
-      downloadUrl: response.downloadUrl,
-      releaseNotes: response.releaseNotes || 'Улучшения производительности и исправления ошибок.',
-      isMandatory: response.isMandatory
+      latestVersion: initialInfo.newVersion,
+      latestBuildNumber: newBuild,
+      downloadUrl: linkInfo.downloadUrl,
+      releaseNotes: initialInfo.releaseNotes,
+      isMandatory: initialInfo.isMandatory,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     
     console.log('✅ Firestore обновлен!');
@@ -106,9 +123,9 @@ async function run() {
     console.error('❌ Ошибка при обновлении Firestore:', e);
   }
 
-  console.log('\n🎉 РЕЛИЗ ГОТОВ!');
-  console.log(`Твой APK находится здесь: build/app/outputs/flutter-apk/app-release.apk`);
-  console.log(`Обязательно загрузи его по ссылке: ${response.downloadUrl}`);
+  console.log('\n🎉 РЕЛИЗ ПОЛНОСТЬЮ ГОТОВ!');
+  console.log(`Версия: ${initialInfo.newVersion}+${newBuild}`);
+  console.log(`Ссылка в базе: ${linkInfo.downloadUrl}`);
   process.exit(0);
 }
 

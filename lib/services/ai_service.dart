@@ -13,24 +13,41 @@ class AiService {
       'https://openrouter.ai/api/v1/chat/completions';
   static const String _groqUrl =
       'https://api.groq.com/openai/v1/chat/completions';
+  static const String _dartDefineAiApiKey =
+      String.fromEnvironment('AI_API_KEY');
+  static const String _dartDefineOmniRouteApiKey =
+      String.fromEnvironment('OMNIROUTE_API_KEY');
+  static const String _dartDefineOpenRouterApiKey =
+      String.fromEnvironment('OPENROUTER_API_KEY');
+  static const String _dartDefineOpenRouterModel1 =
+      String.fromEnvironment('OPENROUTER_MODEL_1');
+  static const String _dartDefineOpenRouterModel2 =
+      String.fromEnvironment('OPENROUTER_MODEL_2');
+  static const String _dartDefineGroqApiKey =
+      String.fromEnvironment('GROQ_API_KEY');
+  static const String _dartDefineAiBaseUrl =
+      String.fromEnvironment('AI_BASE_URL');
+  static const String _dartDefineOmniRouteBaseUrl =
+      String.fromEnvironment('OMNIROUTE_BASE_URL');
+  static const String _dartDefineAiModel = String.fromEnvironment('AI_MODEL');
 
   String get _apiKey {
-    final genericKey = dotenv.env['AI_API_KEY'];
+    final genericKey = _env('AI_API_KEY');
     if (_isUsableKey(genericKey)) {
       return genericKey!.trim();
     }
 
-    final omniRouteKey = dotenv.env['OMNIROUTE_API_KEY'];
+    final omniRouteKey = _env('OMNIROUTE_API_KEY');
     if (_isUsableKey(omniRouteKey)) {
       return omniRouteKey!.trim();
     }
 
-    final openRouterKey = dotenv.env['OPENROUTER_API_KEY'];
+    final openRouterKey = _env('OPENROUTER_API_KEY');
     if (_isUsableKey(openRouterKey)) {
       return openRouterKey!.trim();
     }
 
-    final groqKey = dotenv.env['GROQ_API_KEY'];
+    final groqKey = _env('GROQ_API_KEY');
     if (_isUsableKey(groqKey)) {
       return groqKey!.trim();
     }
@@ -39,13 +56,12 @@ class AiService {
   }
 
   String get _apiUrl {
-    final customBaseUrl =
-        dotenv.env['AI_BASE_URL'] ?? dotenv.env['OMNIROUTE_BASE_URL'];
+    final customBaseUrl = _env('AI_BASE_URL') ?? _env('OMNIROUTE_BASE_URL');
     if (customBaseUrl != null && customBaseUrl.trim().isNotEmpty) {
       return _completionEndpoint(customBaseUrl);
     }
 
-    if (_isUsableKey(dotenv.env['OPENROUTER_API_KEY'])) {
+    if (_isUsableKey(_env('OPENROUTER_API_KEY'))) {
       return _openRouterUrl;
     }
 
@@ -58,7 +74,7 @@ class AiService {
   }
 
   String _modelFor(String apiUrl) {
-    final customModel = dotenv.env['AI_MODEL'];
+    final customModel = _env('AI_MODEL');
     if (customModel != null && customModel.trim().isNotEmpty) {
       return customModel.trim();
     }
@@ -83,6 +99,10 @@ class AiService {
     required DateTime dueDate,
     String? note,
   }) async {
+    if (!isConfigured) {
+      return _getFallbackPriorityAnalysis(title, category, dueDate);
+    }
+
     final limitMessage = await _consumeAiOrLimitMessage();
     if (limitMessage != null) {
       return limitMessage;
@@ -103,16 +123,20 @@ Provide a brief analysis on:
 3. One actionable tip for completing it efficiently
 ''';
 
-      return await _makeRequest(prompt);
+      return await _requestWithFallback(prompt);
     } catch (error) {
       if (kDebugMode) {
-        print('AI analysis error: $error');
+        debugPrint('AI analysis error: $error');
       }
       return _getFallbackPriorityAnalysis(title, category, dueDate);
     }
   }
 
   Future<String> suggestTaskBreakdown(String taskTitle) async {
+    if (!isConfigured) {
+      return _getFallbackBreakdown(taskTitle);
+    }
+
     final limitMessage = await _consumeAiOrLimitMessage();
     if (limitMessage != null) {
       return limitMessage;
@@ -128,10 +152,10 @@ Provide a numbered list of concrete steps to complete this task.
 Keep each step clear and actionable.
 ''';
 
-      return await _makeRequest(prompt);
+      return await _requestWithFallback(prompt);
     } catch (error) {
       if (kDebugMode) {
-        print('AI breakdown error: $error');
+        debugPrint('AI breakdown error: $error');
       }
       return _getFallbackBreakdown(taskTitle);
     }
@@ -142,6 +166,10 @@ Keep each step clear and actionable.
       return _isRussian
           ? 'Добавьте несколько задач, чтобы получить персональные инсайты.'
           : 'Add some tasks to get personalized insights!';
+    }
+
+    if (!isConfigured) {
+      return _getFallbackInsights(tasks);
     }
 
     final limitMessage = await _consumeAiOrLimitMessage();
@@ -171,10 +199,10 @@ Provide brief, motivating insights about:
 3. One specific recommendation
 ''';
 
-      return await _makeRequest(prompt);
+      return await _requestWithFallback(prompt);
     } catch (error) {
       if (kDebugMode) {
-        print('AI insights error: $error');
+        debugPrint('AI insights error: $error');
       }
       return _getFallbackInsights(tasks);
     }
@@ -185,6 +213,10 @@ Provide brief, motivating insights about:
       return _isRussian
           ? 'Нет активных задач для планирования.'
           : 'No pending tasks to schedule!';
+    }
+
+    if (!isConfigured) {
+      return _getFallbackSchedule(pendingTasks);
     }
 
     final limitMessage = await _consumeAiOrLimitMessage();
@@ -210,10 +242,10 @@ Consider priority, duration, and energy levels throughout the day.
 Provide a brief schedule recommendation with reasoning.
 ''';
 
-      return await _makeRequest(prompt);
+      return await _requestWithFallback(prompt);
     } catch (error) {
       if (kDebugMode) {
-        print('AI schedule error: $error');
+        debugPrint('AI schedule error: $error');
       }
       return _getFallbackSchedule(pendingTasks);
     }
@@ -233,9 +265,56 @@ Provide a brief schedule recommendation with reasoning.
         : 'AI daily limit reached for $plan. Upgrade or try again tomorrow.';
   }
 
-  Future<String> _makeRequest(String prompt) async {
-    final apiUrl = _apiUrl;
-    final apiKey = _apiKey;
+  Future<String> _requestWithFallback(String prompt) async {
+    // 1. Try Primary Configuration (e.g. OmniRoute/Claude 4.5)
+    try {
+      return await _makeRequest(prompt);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Primary AI service failed, trying fallbacks: $e');
+      }
+    }
+
+    // 2. Try OpenRouter Fallbacks
+    final orKey = _env('OPENROUTER_API_KEY');
+    if (_isUsableKey(orKey)) {
+      final models = [
+        _env('OPENROUTER_MODEL_1'),
+        _env('OPENROUTER_MODEL_2'),
+      ].where((m) => m != null && m.trim().isNotEmpty).toList();
+
+      for (final model in models) {
+        try {
+          if (kDebugMode) {
+            debugPrint('Trying OpenRouter fallback model: $model');
+          }
+          return await _makeRequest(
+            prompt,
+            url: _openRouterUrl,
+            key: orKey!.trim(),
+            model: model!.trim(),
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('OpenRouter fallback model $model failed: $e');
+          }
+        }
+      }
+    }
+
+    // 3. Last resort or final failure
+    throw Exception('All AI service attempts failed');
+  }
+
+  Future<String> _makeRequest(
+    String prompt, {
+    String? url,
+    String? key,
+    String? model,
+  }) async {
+    final apiUrl = url ?? _apiUrl;
+    final apiKey = key ?? _apiKey;
+    final apiModel = model ?? _modelFor(apiUrl);
 
     if (apiKey.isEmpty && !_allowsUnauthenticatedEndpoint(apiUrl)) {
       throw StateError('AI API key is not configured');
@@ -259,7 +338,7 @@ Provide a brief schedule recommendation with reasoning.
           Uri.parse(apiUrl),
           headers: headers,
           body: jsonEncode({
-            'model': _modelFor(apiUrl),
+            'model': apiModel,
             'messages': [
               {
                 'role': 'system',
@@ -398,6 +477,31 @@ Provide a brief schedule recommendation with reasoning.
       return body;
     }
     return '${body.substring(0, 240)}...';
+  }
+
+  String? _env(String key) {
+    final defined = switch (key) {
+      'AI_API_KEY' => _dartDefineAiApiKey,
+      'OMNIROUTE_API_KEY' => _dartDefineOmniRouteApiKey,
+      'OPENROUTER_API_KEY' => _dartDefineOpenRouterApiKey,
+      'GROQ_API_KEY' => _dartDefineGroqApiKey,
+       'AI_BASE_URL' => _dartDefineAiBaseUrl,
+      'OMNIROUTE_BASE_URL' => _dartDefineOmniRouteBaseUrl,
+      'AI_MODEL' => _dartDefineAiModel,
+      'OPENROUTER_MODEL_1' => _dartDefineOpenRouterModel1,
+      'OPENROUTER_MODEL_2' => _dartDefineOpenRouterModel2,
+      _ => '',
+    };
+
+    if (defined.trim().isNotEmpty) {
+      return defined;
+    }
+
+    if (!dotenv.isInitialized) {
+      return null;
+    }
+
+    return dotenv.env[key];
   }
 
   String _getFallbackPriorityAnalysis(

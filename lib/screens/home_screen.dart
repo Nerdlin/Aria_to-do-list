@@ -205,11 +205,16 @@ class HomeScreen extends StatelessWidget {
                                           size: 18,
                                         ),
                                         const SizedBox(width: 10),
-                                        Text(
-                                          tr('Add another task'),
-                                          style: const TextStyle(
-                                            color: Color(0xFF7C3AED),
-                                            fontWeight: FontWeight.w700,
+                                        Flexible(
+                                          child: Text(
+                                            tr('Add another task'),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Color(0xFF7C3AED),
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -613,30 +618,45 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _StatCard(
-          label: tr('Tasks Done'),
-          value: '$completedToday',
-          unit: '/$totalToday',
-          color: const Color(0xFF7C3AED),
-        ),
-        _StatCard(
-          label: tr('Focus Time'),
-          value: (focusMinutesToday / 60).toStringAsFixed(
-            focusMinutesToday >= 60 ? 1 : 0,
-          ),
-          unit: tr('h'),
-          color: const Color(0xFF3B82F6),
-        ),
-        _StatCard(
-          label: tr('Streak'),
-          value: '$streak',
-          unit: tr('d'),
-          color: const Color(0xFF10B981),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.15;
+
+        return Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: tr('Tasks Done'),
+                value: '$completedToday',
+                unit: '/$totalToday',
+                color: const Color(0xFF7C3AED),
+                isCompact: isCompact,
+              ),
+            ),
+            Expanded(
+              child: _StatCard(
+                label: tr('Focus Time'),
+                value: (focusMinutesToday / 60).toStringAsFixed(
+                  focusMinutesToday >= 60 ? 1 : 0,
+                ),
+                unit: tr('h'),
+                color: const Color(0xFF3B82F6),
+                isCompact: isCompact,
+              ),
+            ),
+            Expanded(
+              child: _StatCard(
+                label: tr('Streak'),
+                value: '$streak',
+                unit: tr('d'),
+                color: const Color(0xFF10B981),
+                isCompact: isCompact,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -647,63 +667,77 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.unit,
     required this.color,
+    required this.isCompact,
   });
 
   final String label;
   final String value;
   final String unit;
   final Color color;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF111827) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.dividerColor),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: color,
+    return Container(
+      constraints: const BoxConstraints(minHeight: 122),
+      margin: EdgeInsets.symmetric(horizontal: isCompact ? 3 : 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 10 : 14,
+        vertical: 18,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isCompact ? 25 : 28,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
                   ),
-                ),
-                Text(
-                  unit,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                  Text(
+                    unit,
+                    style: TextStyle(
+                      fontSize: isCompact ? 13 : 14,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isCompact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -724,21 +758,56 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 340 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.25;
+          final titleWidget = Text(
             title,
+            maxLines: compact ? 3 : 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-          ),
-          TextButton(
+          );
+          final action = TextButton(
             onPressed: onActionTap,
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               actionLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-          ),
-        ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleWidget,
+                const SizedBox(height: 4),
+                Align(alignment: Alignment.centerRight, child: action),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: titleWidget),
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth * 0.32,
+                ),
+                child: action,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -773,28 +842,43 @@ class _ScheduleCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 64,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 54, maxWidth: 68),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    DateFormat('h:mm').format(task.date),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: task.isCompleted ? 0.46 : 1,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        DateFormat('h:mm').format(task.date),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: task.isCompleted ? 0.46 : 1,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    tr('{min} min',
-                        namedArgs: {'min': task.durationMinutes.toString()}),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        tr(
+                          '{min} min',
+                          namedArgs: {'min': task.durationMinutes.toString()},
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.5),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -830,6 +914,8 @@ class _ScheduleCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     tr(task.category),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: accentColor,
                       fontWeight: FontWeight.w700,
@@ -862,8 +948,6 @@ class _ScheduleCard extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 class _PriorityTaskCard extends StatelessWidget {
@@ -913,6 +997,8 @@ class _PriorityTaskCard extends StatelessWidget {
             Expanded(
               child: Text(
                 task.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -937,8 +1023,6 @@ class _PriorityTaskCard extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 class _WeeklyProgressCard extends StatelessWidget {
@@ -965,32 +1049,36 @@ class _WeeklyProgressCard extends StatelessWidget {
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tr('WEEKLY SCORE'),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.68),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tr('WEEKLY SCORE'),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.68),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$score%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(height: 6),
+                    Text(
+                      '$score%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               Container(
+                constraints: const BoxConstraints(maxWidth: 150),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -1002,6 +1090,9 @@ class _WeeklyProgressCard extends StatelessWidget {
                     'sign': change >= 0 ? '+' : '',
                     'change': change.abs().toString()
                   }),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
                   style: const TextStyle(
                     color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.w700,
@@ -1200,7 +1291,12 @@ class _EmptyCard extends StatelessWidget {
           const SizedBox(height: 14),
           FilledButton(
             onPressed: onTap,
-            child: Text(actionLabel),
+            child: Text(
+              actionLabel,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),

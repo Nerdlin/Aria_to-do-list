@@ -87,30 +87,38 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              tr('Analytics'),
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: theme.colorScheme.onSurface,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tr('Analytics'),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              tr(TaskMetrics.rangeLabel(_selectedRange)),
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.64),
+                              const SizedBox(height: 4),
+                              Text(
+                                tr(TaskMetrics.rangeLabel(_selectedRange)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.64),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 12),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             _RangeChip(
                               label: 'W',
@@ -319,89 +327,118 @@ class _ScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF4C1D95)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 82,
-            height: 82,
-            child: AnimatedBuilder(
-              animation: animation,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _ScoreRingPainter((score / 100) * animation.value),
-                  child: Center(
-                    child: Text(
-                      '$score%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tr('PERFORMANCE SCORE'),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.66),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 330 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.2;
+        final ring = SizedBox(
+          width: 82,
+          height: 82,
+          child: AnimatedBuilder(
+            animation: animation,
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _ScoreRingPainter((score / 100) * animation.value),
+                child: Center(
                   child: Text(
-                    tr(
-                      '{sign}{change}% vs previous period',
-                      namedArgs: {
-                        'sign': change >= 0 ? '+' : '',
-                        'change': change.abs().toString(),
-                      },
-                    ),
+                    '$score%',
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFC4B5FD),
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
+              );
+            },
+          ),
+        );
+        final content = Column(
+          crossAxisAlignment:
+              compact ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+          children: [
+            Text(
+              tr('PERFORMANCE SCORE'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: compact ? TextAlign.center : TextAlign.start,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.66),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: compact ? TextAlign.center : TextAlign.start,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxWidth: 230),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                tr(
+                  '{sign}{change}% vs previous period',
+                  namedArgs: {
+                    'sign': change >= 0 ? '+' : '',
+                    'change': change.abs().toString(),
+                  },
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: compact ? TextAlign.center : TextAlign.start,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFC4B5FD),
+                ),
+              ),
+            ),
+          ],
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF1E1B4B),
+                Color(0xFF312E81),
+                Color(0xFF4C1D95),
               ],
             ),
+            borderRadius: BorderRadius.circular(24),
           ),
-        ],
-      ),
+          child: compact
+              ? Column(
+                  children: [
+                    ring,
+                    const SizedBox(height: 14),
+                    content,
+                  ],
+                )
+              : Row(
+                  children: [
+                    ring,
+                    const SizedBox(width: 20),
+                    Expanded(child: content),
+                  ],
+                ),
+        );
+      },
     );
   }
 }
@@ -458,67 +495,89 @@ class _StatsGrid extends StatelessWidget {
       ),
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: stats.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 1.28,
-      ),
-      itemBuilder: (context, index) {
-        final stat = stats[index];
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF111827) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
+        final compact = constraints.maxWidth < 360 || textScale > 1.15;
+        final aspectRatio = compact ? 0.92 : 1.05;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: stats.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: aspectRatio,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: stat.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(stat.icon, color: stat.color, size: 18),
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Container(
+              padding: EdgeInsets.all(compact ? 12 : 14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF111827) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
-              const Spacer(),
-              Text(
-                stat.value,
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 32 : 34,
+                    height: compact ? 32 : 34,
+                    decoration: BoxDecoration(
+                      color: stat.color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(stat.icon, color: stat.color, size: 18),
+                  ),
+                  const Spacer(),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        stat.value,
+                        style: TextStyle(
+                          fontSize: compact ? 21 : 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    stat.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 13 : 14,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.64),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    stat.change,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: stat.positive
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEF4444),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 3),
-              Text(
-                stat.label,
-                style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.64),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                stat.change,
-                style: TextStyle(
-                  color: stat.positive
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFEF4444),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -551,15 +610,25 @@ class _TrendCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
+              const SizedBox(width: 10),
               Text(
                 subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
                 style: TextStyle(
                   color: Theme.of(context)
                       .colorScheme
@@ -673,6 +742,8 @@ class _CategoryBreakdownCard extends StatelessWidget {
         children: [
           Text(
             tr('Task Categories'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
@@ -687,23 +758,32 @@ class _CategoryBreakdownCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(3),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            tr(entry.key),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                tr(entry.key),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 10),
                       Text(
                         '$percentage%',
                         style: TextStyle(
@@ -731,8 +811,6 @@ class _CategoryBreakdownCard extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 class _AchievementsCard extends StatelessWidget {
@@ -765,6 +843,8 @@ class _AchievementsCard extends StatelessWidget {
         children: [
           Text(
             tr('Achievements'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -772,60 +852,74 @@ class _AchievementsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: achievements
-                .map(
-                  (achievement) => Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: achievement.unlocked
-                            ? (isDark ? const Color(0xFF172033) : Colors.white)
-                            : (isDark
-                                ? const Color(0xFF0F172A)
-                                    .withValues(alpha: 0.82)
-                                : Colors.white.withValues(alpha: 0.55)),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : Colors.transparent,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 8) / 2;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: achievements
+                    .map(
+                      (achievement) => SizedBox(
+                        width: itemWidth,
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 84),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: achievement.unlocked
+                                ? (isDark
+                                    ? const Color(0xFF172033)
+                                    : Colors.white)
+                                : (isDark
+                                    ? const Color(0xFF0F172A)
+                                        .withValues(alpha: 0.82)
+                                    : Colors.white.withValues(alpha: 0.55)),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                achievement.emoji,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                achievement.label,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w700,
+                                  color: achievement.unlocked
+                                      ? (isDark
+                                          ? const Color(0xFFE2E8F0)
+                                          : const Color(0xFF475569))
+                                      : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            achievement.emoji,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            achievement.label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 10,
-                              height: 1.35,
-                              fontWeight: FontWeight.w700,
-                              color: achievement.unlocked
-                                  ? (isDark
-                                      ? const Color(0xFFE2E8F0)
-                                      : const Color(0xFF475569))
-                                  : const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
+              );
+            },
           ),
         ],
       ),
@@ -849,6 +943,7 @@ class _UpgradeAnalyticsCard extends StatelessWidget {
         border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 44,
@@ -869,11 +964,15 @@ class _UpgradeAnalyticsCard extends StatelessWidget {
               children: [
                 Text(
                   tr('Advanced analytics'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   tr('Upgrade to Pro to unlock categories, achievements, and deeper reports.'),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
                     height: 1.4,
@@ -884,7 +983,16 @@ class _UpgradeAnalyticsCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pushNamed(context, '/subscription'),
-            child: Text(tr('Upgrade')),
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              tr('Upgrade'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

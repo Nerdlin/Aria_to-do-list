@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../models/user_profile.dart';
 import '../services/app_controller.dart';
@@ -279,16 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Center(
-                              child: Text(
-                                'Aria v2.4.1',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.45),
-                                ),
-                              ),
-                            ),
+                            const Center(child: _AppVersionLabel()),
                           ],
                         ),
                       ),
@@ -660,6 +652,39 @@ class _ProfileBadge extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+class _AppVersionLabel extends StatelessWidget {
+  const _AppVersionLabel();
+
+  static final Future<String> _version = PackageInfo.fromPlatform().then((
+    packageInfo,
+  ) {
+    final buildNumber = packageInfo.buildNumber.trim();
+    if (buildNumber.isEmpty) {
+      return packageInfo.version;
+    }
+    return '${packageInfo.version}+$buildNumber';
+  }).catchError((Object _) => 'unknown');
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _version,
+      builder: (context, snapshot) {
+        final version = snapshot.data;
+        return Text(
+          version == null ? 'Aria' : 'Aria v$version',
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurface.withValues(
+                  alpha: 0.45,
+                ),
+          ),
+        );
+      },
     );
   }
 }

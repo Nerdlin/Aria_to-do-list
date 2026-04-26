@@ -17,7 +17,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Keep local AI config optional so fresh checkouts still boot with
-  // deterministic fallback recommendations.
+  // deterministic fallback recommendations. AiService also reads
+  // --dart-define values directly.
   await dotenv.load(fileName: ".env", isOptional: true);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -55,6 +56,11 @@ class AriaApp extends StatelessWidget {
             '/auth': (_) => const AuthScreen(),
             '/register': (_) => const RegistrationScreen(),
             '/shell': (_) => const AppShell(),
+            '/home': (_) => const AppShell(initialIndex: 0),
+            '/tasks': (_) => const AppShell(initialIndex: 1),
+            '/ai': (_) => const AppShell(initialIndex: 2),
+            '/analytics': (_) => const AppShell(initialIndex: 3),
+            '/settings': (_) => const AppShell(initialIndex: 4),
             '/add-task': (_) => const AddTaskScreen(),
             '/subscription': (_) => const SubscriptionScreen(),
           },

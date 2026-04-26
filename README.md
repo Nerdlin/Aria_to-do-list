@@ -67,6 +67,10 @@ AI_BASE_URL=https://your-ai-endpoint.com
 AI_API_KEY=your-api-key-here
 AI_MODEL=nvidia/nemotron-3-super-120b-a12b:free
 INITIAL_PASSWORD=your-initial-password
+
+# Windows-скрипт run_mobile.bat подхватит эти значения автоматически.
+# Для ручного запуска используйте:
+flutter run --dart-define=AI_BASE_URL=https://your-ai-endpoint.com --dart-define=AI_API_KEY=your-api-key-here --dart-define=AI_MODEL=nvidia/nemotron-3-super-120b-a12b:free
 ```
 
 **Рекомендуемые бесплатные модели:**
@@ -216,12 +220,31 @@ lib/
 
 ## 🔐 Безопасность
 
-- ✅ API ключи в `.env` для локальной разработки (не коммитятся в Git)
-- ⚠️ Для production AI ключи нужно держать на backend/proxy, так как Flutter assets попадают в клиентскую сборку
+- ✅ API ключи в `.env` только для локального скрипта запуска; в Flutter assets `.env` больше не включается
+- ⚠️ Для production AI ключи нужно держать на backend/proxy, так как любой клиентский конфиг может быть извлечен из сборки
 - ✅ Firebase credentials защищены
 - ✅ `.gitignore` настроен правильно
 - ✅ Автоматический fallback между AI провайдерами
 - ✅ Локальные fallback-рекомендации при недоступности API
+
+---
+
+## 🔄 Автоуведомление об обновлении
+
+Приложение проверяет Firestore-документ `config/app_version` при запуске, на onboarding/login и после входа. Если в Firestore версия или build выше установленной сборки, пользователь увидит окно обновления.
+
+Минимальный документ:
+```json
+{
+  "latestVersion": "1.0.2",
+  "latestBuildNumber": 3,
+  "downloadUrl": "https://your-domain.com/aria-app-release.apk",
+  "releaseNotes": "Исправлена адаптивность и улучшены обновления.",
+  "isMandatory": false
+}
+```
+
+Важно: Android не разрешает тихо установить APK в обход пользователя. Для sideload APK приложение может показать уведомление и открыть ссылку на скачивание; пользователь подтверждает установку сам. Чтобы проверка работала у всех, задеплойте правила Firestore: `firebase deploy --only firestore:rules`.
 
 ---
 
@@ -240,7 +263,7 @@ lib/
 - 📊 **Инсайты продуктивности** - персонализированные рекомендации
 - 📅 **Умное планирование** - оптимальное расписание задач
 - 🌍 **Мультиязычность** - поддержка русского и английского
-- 🔐 **Безопасность** - API ключи вынесены в .env
+- 🔐 **Безопасность** - AI конфиг передается через `--dart-define`, `.env` не включается в assets
 
 ### 🔧 Улучшено:
 - ✅ Проверка проекта на баги (0 критических ошибок)

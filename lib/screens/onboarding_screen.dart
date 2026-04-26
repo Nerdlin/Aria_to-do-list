@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/update_service.dart';
 import '../utils/translations.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -62,6 +63,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'chips': ['Pattern Learning', 'Peak Hours'],
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      UpdateService.instance.checkForUpdates(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

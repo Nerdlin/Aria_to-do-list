@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_error_mapper.dart';
 import '../services/auth_service.dart';
+import '../services/update_service.dart';
 import '../utils/translations.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -20,6 +21,17 @@ class _AuthScreenState extends State<AuthScreen> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      UpdateService.instance.checkForUpdates(context);
+    });
+  }
 
   @override
   void dispose() {
