@@ -68,3 +68,5 @@ scripts/serviceAccountKey.json
 # Release keys
 android/app/*.jks
 android/app/aria-release-key.jks
+
+photo
